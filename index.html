@@ -551,8 +551,8 @@
       const index = waitingList.findIndex(q => q.token === patient.token);
       const ahead = index > 0 ? index : 0;
 
-      document.getElementById("ticket-patients-ahead").innerText = ahead === 0 ? "You are next!" : ${ahead} Patients;
-      document.getElementById("ticket-wait-time").innerText = ahead === 0 ? "~5 mins" : ~${ahead * 10} mins;
+      document.getElementById("ticket-patients-ahead").innerText = ahead === 0 ? "You are next!" : `${ahead} Patients`;
+      document.getElementById("ticket-wait-time").innerText = ahead === 0 ? "~5 mins" : `~${ahead * 10} mins`;
       document.getElementById("ticket-status-badge").innerText = patient.status;
 
       // Update Notification Text
@@ -560,11 +560,11 @@
       const smsBody = document.getElementById("sms-msg-body");
 
       if (patient.status === "In Consultation") {
-        waBody.innerHTML = 🏥 <span class="font-bold text-emerald-700">Token #${patient.token}</span>: Please enter the Doctor's cabin now!;
-        smsBody.innerHTML = Sky Hospital: Token #${patient.token} is called. Please proceed to doctor room.;
+        waBody.innerHTML = `🏥 <span class="font-bold text-emerald-700">Token #${patient.token}</span>: Please enter the Doctor's cabin now!`;
+        smsBody.innerHTML = `Sky Hospital: Token #${patient.token} is called. Please proceed to doctor room.`;
       } else {
-        waBody.innerHTML = Hello <span class="font-bold text-slate-900">${patient.name}</span>! Token <span class="font-bold text-blue-600">#${patient.token}</span> registered. ${ahead} patients ahead of you.;
-        smsBody.innerHTML = Sky Hospital: Token #${patient.token} active. ${ahead} patients ahead. Est wait: ~${ahead * 10}m.;
+        waBody.innerHTML = `Hello <span class="font-bold text-slate-900">${patient.name}</span>! Token <span class="font-bold text-blue-600">#${patient.token}</span> registered. ${ahead} patients ahead of you.`;
+        smsBody.innerHTML = `Sky Hospital: Token #${patient.token} active. ${ahead} patients ahead. Est wait: ~${ahead * 10}m.`;
       }
     }
 
@@ -595,7 +595,7 @@
       tbody.innerHTML = "";
 
       const activeQueue = queueList.filter(q => q.status !== "Completed" && q.status !== "Cancelled");
-      document.getElementById("queue-count-badge").innerText = ${activeQueue.length} Waiting;
+      document.getElementById("queue-count-badge").innerText = `${activeQueue.length} Waiting`;
 
       activeQueue.forEach((patient, idx) => {
         const tr = document.createElement("tr");
@@ -661,8 +661,8 @@
         nextPatient.status = "In Consultation";
         doc.token = nextPatient.token;
         doc.status = "In Consultation";
-        document.getElementById(doc-token-${docId}).innerText = Token #${nextPatient.token};
-        document.getElementById(doc-status-${docId}).className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
+        document.getElementById(`doc-token-${docId}`).innerText = `Token #${nextPatient.token}`;
+        document.getElementById(`doc-status-${docId}`).className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
         renderStaffDashboard();
       }
     }
@@ -674,8 +674,8 @@
         if (patient) patient.status = "Completed";
         doc.token = null;
         doc.status = "Available";
-        document.getElementById(doc-token-${docId}).innerText = "None (Available)";
-        document.getElementById(doc-status-${docId}).className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+        document.getElementById(`doc-token-${docId}`).innerText = "None (Available)";
+        document.getElementById(`doc-status-${docId}`).className = "w-2.5 h-2.5 rounded-full bg-amber-400";
         renderStaffDashboard();
       }
     }
@@ -714,14 +714,15 @@
         if (seconds > 0) seconds--;
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        const timeStr = ${mins}m ${secs < 10 ? '0' : ''}${secs}s;
+        const timeStr = `${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
         
         const waTimer = document.getElementById("wa-live-timer");
         const smsTimer = document.getElementById("sms-live-timer");
-        if (waTimer) waTimer.innerText = ⏱️ ${timeStr};
+        if (waTimer) waTimer.innerText = `⏱️ ${timeStr}`;
         if (smsTimer) smsTimer.innerText = timeStr;
       }, 1000);
     }
   </script>
 </body>
 </html>
+
