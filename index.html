@@ -1,20 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sky Multispecialty Hospital - Queue System</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sky Multispecialty Hospital - Queue Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     @keyframes scanBeam {
-      0% { top: 0%; opacity: 0.8; }
-      50% { top: 90%; opacity: 1; }
-      100% { top: 0%; opacity: 0.8; }
+      0% { top: 10%; opacity: 0.8; }
+      50% { top: 85%; opacity: 1; }
+      100% { top: 10%; opacity: 0.8; }
     }
-    .animate-scan {
-      animation: scanBeam 2s infinite ease-in-out;
+    .scan-line {
+      animation: scanBeam 2.5s infinite ease-in-out;
     }
-    .scanner-overlay {
-      background: rgba(0, 
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans antialiased">
+
+  <!-- TOP DEPLOYMENT NAVIGATION BAR -->
+  <header class="bg-slate-900 text-white px-4 py-3 shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <div class="bg-blue-600 text-white p-2 rounded-lg font-bold">🏥 Sky</div>
+        <div>
+          <h1 class="font-bold text-sm sm:text-base leading-tight">Sky Multispecialty Hospital</h1>
+          <p class="text-xs text-slate-400">Live Interactive Queue Prototype</p>
+        </div>
+      </div>
+      
+      <!-- View Switcher -->
+      <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs sm:text-sm">
+        <button id="nav-btn-both" onclick="setViewMode('both')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white">
+          <i class="fa-solid fa-columns mr-1.5"></i> Dual Interactive View
+        </button>
+        <button id="nav-btn-patient" onclick="setViewMode('patient')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
+          <i class="fa-solid fa-mobile-screen mr-1.5"></i> Patient App Only
+        </button>
+        <button id="nav-btn-staff" onclick="setViewMode('staff')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
+          <i class="fa-solid fa-desktop mr-1.5"></i> Front Desk Only
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto p-4 sm:p-6">
+    <div id="app-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- ================= PATIENT MOBILE APP ================= -->
+      <section id="patient-container" class="lg:col-span-5 flex flex-col items-center">
+        <div class="w-full max-w-sm bg-black p-3 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
+          
+          <!-- Smartphone Notch / Speaker -->
+          <div class="w-32 h-4 bg-slate-900 mx-auto rounded-b-xl mb-2 flex justify-center items-center">
+            <div class="w-12 h-1 bg-slate-700 rounded-full"></div>
+          </div>
+
+          <!-- Smartphone Screen Content -->
+          <div class="bg-slate-50 rounded-[30px] overflow-hidden min-h-[670px] flex flex-col text-slate-800 border border-slate-200 relative">
+            
+            <!-- Mobile App Top Bar -->
+            <div class="bg-blue-700 text-white p-4 shadow-sm flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-hospital text-xl"></i>
+                <div>
+                  <h2 class="font-bold text-sm leading-tight">Sky Multispecialty Hospital</h2>
+                  <p class="text-[10px] text-blue-200">Digital Token System</p>
+                </div>
+              </div>
+              <button onclick="resetPatientScanner()" title="Scan Again" class="text-xs bg-blue-800 hover:bg-blue-900 text-white px-2 py-1 rounded border border-blue-600 flex items-center gap-1">
+                <i class="fa-solid fa-qrcode"></i> Scan Again
+              </button>
+            </div>
+
+            <!-- DYNAMIC SCREEN CONTENT -->
+            <div class="p-4 flex-1 overflow-y-auto custom-scrollbar">
+
+              <!-- SCREEN 0: SCAN QR CODE -->
+              <div id="patient-screen-scan" class="flex flex-col items-center justify-center h-full text-center py-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 w-full">
+                  <span class="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-2">Walk-In Patient Portal</span>
+                  <h3 class="font-bold text-slate-800 text-base mb-1">Welcome to Sky Multispecialty Hospital</h3>
+                  <p class="text-xs text-slate-600">Please scan the QR code to get your waiting token number</p>
+                </div>
+
+                <!-- Camera Viewfinder Box -->
+                <div onclick="simulateQRScan()" class="cursor-pointer relative w-56 h-56 bg-slate-900 rounded-2xl border-4 border-blue-500 overflow-hidden shadow-lg flex items-center justify-center my-2 group">
+                  <!-- Animated Scanning Line -->
+                  <div class="scan-line absolute w-full h-1 bg-cyan-400 shadow-[0_0_15px_#22d3ee]"></div>
+                  
+                  <!-- Dummy Poster QR Code inside camera view -->
+                  <div class="p-3 bg-white rounded-xl shadow border border-slate-300 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https://skyhospital.com/queue" alt="Hospital Front Desk QR Code" class="w-32 h-32 object-contain">
+                  </div>
+
+                  <div class="absolute bottom-2 left-0 right-0 text-center">
+                    <span class="bg-black/70 text-white text-[10px] px-2.5 py-1 rounded-full backdrop-blur-sm">Tap frame to scan QR</span>
+                  </div>
+                </div>
+
+                <button onclick="simulateQRScan()" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-camera"></i> Scan QR Code
+                </button>
+              </div>
+
+              <!-- SCREEN 1: REGISTRATION FORM -->
+              <div id="patient-screen-form" class="hidden space-y-3">
+                <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
+                  <p class="text-xs text-blue-800 font-semibold">📍 Scanned Front Desk Queue QR</p>
+                  <p class="text-[11px] text-blue-600">Enter your details to generate your token number</p>
+                </div>
+
+                <form id="patient-reg-form" onsubmit="handlePatientSubmit(event)" class="space-y-3 text-left">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                    <input type="text" id="p-name" required placeholder="e.g. Rajesh Kumar" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number * (WhatsApp & SMS)</label>
+                    <div class="flex gap-1.5">
+                      <span class="bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-2.5 rounded-lg border border-slate-300 flex items-center">+91</span>
+                      <input type="tel" id="p-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block text-xs font-bold text-slate-700 mb-1">Gender *</label>
+                      <select id="p-gender" required class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth *</label>
+                      <input type="date" id="p-dob" required class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Doctor <span class="text-slate-400 font-normal">(Optional)</span></label>
+                    <select id="p-doctor" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
+                      <option value="Any Doctor">General Queue (Any Doctor)</option>
+                      <option value="Dr. Patel">Dr. Patel (General Physician)</option>
+                      <option value="Dr. Sonone">Dr. Sonone (Pediatrician)</option>
+                      <option value="Dr. Rathi">Dr. Rathi (Orthopedics)</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-ticket"></i> Join Queue & Get Token
+                  </button>
+                </form>
+              </div>
+
+              <!-- SCREEN 2: LIVE TICKET TRACKER -->
+              <div id="patient-screen-ticket" class="hidden space-y-4">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+                  <span class="text-[10px] uppercase font-extrabold text-emerald-700 tracking-wider">Registration Complete</span>
+                  <h3 id="ticket-patient-name" class="font-bold text-slate-800 text-sm">Patient Name</h3>
+                </div>
+
+                <!-- Token Display Box -->
+                <div class="bg-gradient-to-br from-blue-900 to-slate-900 text-white p-5 rounded-2xl text-center shadow-lg relative overflow-hidden">
+                  <p class="text-xs text-blue-300 font-medium">YOUR TOKEN NUMBER</p>
+                  <div id="ticket-number" class="text-5xl font-black my-1 text-cyan-300 tracking-tight">101</div>
+                  <p id="ticket-doctor-assigned" class="text-xs text-slate-300">Doctor: Any Available</p>
+                </div>
+
+                <!-- Status Cards -->
+                <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-2 text-xs">
+                  <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <span class="text-slate-500">Current Status:</span>
+                    <span id="ticket-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">In Waiting Room</span>
+                  </div>
+                  <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <span class="text-slate-500">Patients Ahead:</span>
+                    <span id="ticket-patients-ahead" class="font-bold text-slate-800">2 Patients</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-500">Est. Wait Time:</span>
+                    <span id="ticket-wait-time" class="font-bold text-blue-600">~15 mins</span>
+                  </div>
+                </div>
+
+                <!-- DUAL NOTIFICATIONS SIMULATOR TOGGLE -->
+                <div class="bg-slate-200/60 p-1 rounded-xl flex text-[11px] font-bold border border-slate-300">
+                  <button id="tab-btn-whatsapp" onclick="setNotifTab('whatsapp')" class="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp View
+                  </button>
+                  <button id="tab-btn-sms" onclick="setNotifTab('sms')" class="flex-1 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-comment-sms text-sm"></i> SMS Text View
+                  </button>
+                </div>
+
+                <!-- WHATSAPP NOTIFICATION PREVIEW -->
+                <div id="notif-box-whatsapp" class="bg-[#efeae2] p-3 rounded-xl border border-emerald-300 space-y-2 relative text-left shadow-sm">
+                  <div class="flex items-center justify-between pb-1 border-b border-emerald-200/60">
+                    <span class="text-[10px] font-bold text-emerald-800 flex items-center gap-1">
+                      <i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i> WhatsApp Notification
+                    </span>
+                    <span class="text-[9px] text-slate-500">Just Now</span>
+                  </div>
+                  <div class="bg-white p-2.5 rounded-lg shadow-sm text-[11px] text-slate-800 relative space-y-1 rounded-tl-none border-l-4 border-emerald-500">
+                    <p class="font-bold text-emerald-700">🏥 Sky Multispecialty Hospital</p>
+                    <p id="wa-msg-body">Hello! Token <span class="font-bold text-blue-600">#101</span> registered. Wait time: ~15 mins.</p>
+                    <div class="text-[9px] text-slate-400 text-right font-mono flex items-center justify-end gap-1 pt-1">
+                      <span id="wa-live-timer" class="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">⏱️ 14m 58s</span>
+                      <span>11:45 AM ✓✓</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SMS NOTIFICATION PREVIEW -->
+                <div id="notif-box-sms" class="hidden bg-slate-900 text-white p-3 rounded-xl space-y-2 text-left shadow-sm">
+                  <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+                    <span class="text-[10px] font-bold text-blue-400 flex items-center gap-1">
+                      <i class="fa-solid fa-message text-blue-400"></i> SMS Text Message
+                    </span>
+                    <span class="text-[9px] text-slate-400">ALERT</span>
+                  </div>
+                  <div class="bg-slate-800 p-2.5 rounded-lg text-[11px] space-y-1 border border-slate-700">
+                    <p id="sms-msg-body">Sky Hospital: Token #101 generated. 2 patients ahead.</p>
+                    <div class="text-[9px] text-blue-300 text-right font-mono pt-1">
+                      Live Countdown: <span id="sms-live-timer" class="font-bold text-cyan-300">14m 58s</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button onclick="cancelMyToken()" class="w-full bg-slate-200 hover:bg-rose-100 text-rose-700 font-semibold py-2 rounded-lg text-xs border border-rose-300 transition-colors">
+                  <i class="fa-solid fa-xmark mr-1"></i> Cancel Token / Leave Queue
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Mobile Home Indicator Bar -->
+            <div class="p-2 text-center bg-slate-100 border-t border-slate-200">
+              <div class="w-24 h-1 bg-slate-400 rounded-full mx-auto"></div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= FRONT DESK STAFF DASHBOARD ================= -->
+      <section id="staff-container" class="lg:col-span-7 flex flex-col space-y-4">
+        
+        <!-- Dashboard Top Control Header -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Reception Queue Dashboard</h2>
+            <p class="text-xs text-slate-500">Manage patient queue flow and room calls in real time</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="openManualAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i> Add Walk-In Patient
+            </button>
+            <button onclick="openQRModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-qrcode"></i> Display QR Poster
+            </button>
+          </div>
+        </div>
+
+        <!-- DOCTOR ROOM STATUS CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Dr Patel -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="font-bold text-xs text-slate-800">Dr. Patel</h3>
+                <p class="text-[10px] text-slate-500">General Physician (Room 1)</p>
+              </div>
+              <span id="doc-status-1" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg text-xs mb-2 border border-slate-100">
+              <span class="text-[10px] text-slate-400 block">Current Token:</span>
+              <span id="doc-token-1" class="font-bold text-blue-700 text-sm">Token #101</span>
+            </div>
+            <button onclick="completeCurrentDoctor(1)" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-[11px] py-1.5 rounded-lg font-medium transition-colors">
+              Finish Consultation
+            </button>
+          </div>
+
+          <!-- Dr Sonone -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="font-bold text-xs text-slate-800">Dr. Sonone</h3>
+                <p class="text-[10px] text-slate-500">Pediatrician (Room 2)</p>
+              </div>
+              <span id="doc-status-2" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg text-xs mb-2 border border-slate-100">
+              <span class="text-[10px] text-slate-400 block">Current Token:</span>
+              <span id="doc-token-2" class="font-bold text-slate-400 text-sm">None (Available)</span>
+            </div>
+            <button onclick="callNextForDoctor(2)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] py-1.5 rounded-lg font-medium transition-colors">
+              Call Next Patient
+            </button>
+          </div>
+
+          <!-- Dr Rathi -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="font-bold text-xs text-slate-800">Dr. Rathi</h3>
+                <p class="text-[10px] text-slate-500">Orthopedics (Room 3)</p>
+              </div>
+              <span id="doc-status-3" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+            </div>
+            <div class="bg-slate-50 p-2 rounded-lg text-xs mb-2 border border-slate-100">
+              <span class="text-[10px] text-slate-400 block">Current Token:</span>
+              <span id="doc-token-3" class="font-bold text-slate-400 text-sm">None (Available)</span>
+            </div>
+            <button onclick="callNextForDoctor(3)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] py-1.5 rounded-lg font-medium transition-colors">
+              Call Next Patient
+            </button>
+          </div>
+        </div>
+
+        <!-- REAL-TIME QUEUE TABLE -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
+          <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Live Waiting Queue</h3>
+              <span id="queue-count-badge" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">3 Waiting</span>
+            </div>
+            <span class="text-[11px] text-slate-500">Auto-syncs with WhatsApp & SMS Alerts</span>
+          </div>
+
+          <div class="overflow-x-auto flex-1 custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-500 font-semibold border-b border-slate-200">
+                  <th class="p-3">Token</th>
+                  <th class="p-3">Patient Name</th>
+                  <th class="p-3">Phone</th>
+                  <th class="p-3">Doctor</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staff-queue-tbody" class="divide-y divide-slate-100">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- MODAL: MANUAL ADD PATIENT -->
+  <div id="modal-add-patient" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-bold text-base text-slate-800">Add Walk-In Patient (Front Desk)</h3>
+        <button onclick="closeManualAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="handleStaffManualSubmit(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Patient Full Name *</label>
+          <input type="text" id="m-name" required placeholder="Full Name" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+          <div class="flex gap-1.5">
+            <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-2.5 rounded-lg border border-slate-300">+91</span>
+            <input type="tel" id="m-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Gender</label>
+            <select id="m-gender" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Date of Birth</label>
+            <input type="date" id="m-dob" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Doctor (Optional)</label>
+          <select id="m-doctor" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+            <option value="Any Doctor">General Queue (Any Doctor)</option>
+            <option value="Dr. Patel">Dr. Patel</option>
+            <option value="Dr. Sonone">Dr. Sonone</option>
+            <option value="Dr. Rathi">Dr. Rathi</option>
+          </select>
+        </div>
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeManualAddModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add to Queue</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DISPLAY QR POSTER -->
+  <div id="modal-qr-poster" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hospital Front Desk Display</span>
+        <button onclick="closeQRModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div>
+        <h3 class="font-extrabold text-lg text-slate-800">Sky Multispecialty Hospital</h3>
+        <p class="text-xs text-slate-500">Scan QR to join today's OPD Queue</p>
+      </div>
+      <div class="p-4 bg-white rounded-2xl border-2 border-dashed border-blue-400 inline-block shadow-inner">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://skyhospital.com/queue" alt="Queue Scan QR Code" class="w-44 h-44 object-contain">
+      </div>
+      <p class="text-[11px] text-slate-500">Patients get live WhatsApp & SMS token updates directly on their mobile phones.</p>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // INITIAL APP STATE
+    let nextTokenNumber = 104; // Integer tokens start at 101, 102, 103...
+    let currentActiveToken = null; // Currently tracked by active patient view
+    let notifTab = 'whatsapp';
+
+    let queueList = [
+      { token: 101, name: "Amit Sharma", phone: "+91 9823011223", gender: "Male", doctor: "Dr. Patel", status: "In Consultation" },
+      { token: 102, name: "Priya Deshmukh", phone: "+91 9765432109", gender: "Female", doctor: "Dr. Sonone", status: "Waiting" },
+      { token: 103, name: "Rahul Verma", phone: "+91 9988776655", gender: "Male", doctor: "Dr. Rathi", status: "Waiting" }
+    ];
+
+    let doctorRooms = {
+      1: { name: "Dr. Patel", token: 101, status: "In Consultation" },
+      2: { name: "Dr. Sonone", token: null, status: "Available" },
+      3: { name: "Dr. Rathi", token: null, status: "Available" }
+    };
+
+    // INIT ON LOAD
+    document.addEventListener("DOMContentLoaded", () => {
+      // Check URL params for standalone view modes
+      const urlParams = new URLSearchParams(window.location.search);
+      const view = urlParams.get('view');
+      if (view === 'patient' || view === 'staff') {
+        setViewMode(view);
+      }
+      renderStaffDashboard();
+      startLiveTimers();
+    });
+
+    // VIEW MODE SWITCHER
+    function setViewMode(mode) {
+      const patientCol = document.getElementById("patient-container");
+      const staffCol = document.getElementById("staff-container");
+      const appGrid = document.getElementById("app-grid");
+
+      // Reset button styles
+      document.querySelectorAll('[id^="nav-btn-"]').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('text-slate-300');
+      });
+
+      if (mode === 'patient') {
+        patientCol.classList.remove('hidden');
+        staffCol.classList.add('hidden');
+        appGrid.className = "max-w-md mx-auto";
+        document.getElementById("nav-btn-patient").classList.add('bg-blue-600', 'text-white');
+      } else if (mode === 'staff') {
+        patientCol.classList.add('hidden');
+        staffCol.classList.remove('hidden');
+        staffCol.className = "lg:col-span-12 flex flex-col space-y-4";
+        appGrid.className = "max-w-7xl mx-auto";
+        document.getElementById("nav-btn-staff").classList.add('bg-blue-600', 'text-white');
+      } else {
+        patientCol.classList.remove('hidden');
+        staffCol.classList.remove('hidden');
+        staffCol.className = "lg:col-span-7 flex flex-col space-y-4";
+        appGrid.className = "grid grid-cols-1 lg:grid-cols-12 gap-6";
+        document.getElementById("nav-btn-both").classList.add('bg-blue-600', 'text-white');
+      }
+    }
+
+    // QR SCANNER SIMULATION
+    function simulateQRScan() {
+      document.getElementById("patient-screen-scan").classList.add("hidden");
+      document.getElementById("patient-screen-form").classList.remove("hidden");
+    }
+
+    function resetPatientScanner() {
+      document.getElementById("patient-screen-scan").classList.remove("hidden");
+      document.getElementById("patient-screen-form").classList.add("hidden");
+      document.getElementById("patient-screen-ticket").classList.add("hidden");
+    }
+
+    // PATIENT FORM SUBMISSION
+    function handlePatientSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("p-name").value;
+      const phone = "+91 " + document.getElementById("p-phone").value;
+      const gender = document.getElementById("p-gender").value;
+      const doctor = document.getElementById("p-doctor").value;
+
+      const newToken = nextTokenNumber++;
+      const newPatient = {
+        token: newToken,
+        name: name,
+        phone: phone,
+        gender: gender,
+        doctor: doctor,
+        status: "Waiting"
+      };
+
+      queueList.push(newPatient);
+      currentActiveToken = newToken;
+
+      // Update UI
+      renderPatientTicket(newPatient);
+      renderStaffDashboard();
+
+      document.getElementById("patient-screen-form").classList.add("hidden");
+      document.getElementById("patient-screen-ticket").classList.remove("hidden");
+    }
+
+    // RENDER PATIENT TICKET
+    function renderPatientTicket(patient) {
+      document.getElementById("ticket-patient-name").innerText = patient.name;
+      document.getElementById("ticket-number").innerText = patient.token;
+      document.getElementById("ticket-doctor-assigned").innerText = "Doctor: " + patient.doctor;
+
+      // Calculate position ahead
+      const waitingList = queueList.filter(q => q.status === "Waiting" || q.status === "In Consultation");
+      const index = waitingList.findIndex(q => q.token === patient.token);
+      const ahead = index > 0 ? index : 0;
+
+      document.getElementById("ticket-patients-ahead").innerText = ahead === 0 ? "You are next!" : ${ahead} Patients;
+      document.getElementById("ticket-wait-time").innerText = ahead === 0 ? "~5 mins" : ~${ahead * 10} mins;
+      document.getElementById("ticket-status-badge").innerText = patient.status;
+
+      // Update Notification Text
+      const waBody = document.getElementById("wa-msg-body");
+      const smsBody = document.getElementById("sms-msg-body");
+
+      if (patient.status === "In Consultation") {
+        waBody.innerHTML = 🏥 <span class="font-bold text-emerald-700">Token #${patient.token}</span>: Please enter the Doctor's cabin now!;
+        smsBody.innerHTML = Sky Hospital: Token #${patient.token} is called. Please proceed to doctor room.;
+      } else {
+        waBody.innerHTML = Hello <span class="font-bold text-slate-900">${patient.name}</span>! Token <span class="font-bold text-blue-600">#${patient.token}</span> registered. ${ahead} patients ahead of you.;
+        smsBody.innerHTML = Sky Hospital: Token #${patient.token} active. ${ahead} patients ahead. Est wait: ~${ahead * 10}m.;
+      }
+    }
+
+    // TOGGLE NOTIFICATION TABS
+    function setNotifTab(tab) {
+      notifTab = tab;
+      const waBox = document.getElementById("notif-box-whatsapp");
+      const smsBox = document.getElementById("notif-box-sms");
+      const waBtn = document.getElementById("tab-btn-whatsapp");
+      const smsBtn = document.getElementById("tab-btn-sms");
+
+      if (tab === 'whatsapp') {
+        waBox.classList.remove("hidden");
+        smsBox.classList.add("hidden");
+        waBtn.className = "flex-1 py-1.5 rounded-lg bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all";
+        smsBtn.className = "flex-1 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-all";
+      } else {
+        waBox.classList.add("hidden");
+        smsBox.classList.remove("hidden");
+        smsBtn.className = "flex-1 py-1.5 rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition-all";
+        waBtn.className = "flex-1 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1.5 transition-all";
+      }
+    }
+
+    // RENDER STAFF DASHBOARD TABLE & DOCTORS
+    function renderStaffDashboard() {
+      const tbody = document.getElementById("staff-queue-tbody");
+      tbody.innerHTML = "";
+
+      const activeQueue = queueList.filter(q => q.status !== "Completed" && q.status !== "Cancelled");
+      document.getElementById("queue-count-badge").innerText = ${activeQueue.length} Waiting;
+
+      activeQueue.forEach((patient, idx) => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-100";
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-blue-700">#${patient.token}</td>
+          <td class="p-3 font-medium text-slate-800">${patient.name}</td>
+          <td class="p-3 text-slate-500 font-mono text-[11px]">${patient.phone}</td>
+          <td class="p-3 text-slate-600">${patient.doctor}</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${patient.status === 'In Consultation' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${patient.status}
+            </span>
+          </td>
+          <td class="p-3 text-right space-x-1">
+            <button onclick="movePatient(${idx}, -1)" class="px-1.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded" title="Move Up"><i class="fa-solid fa-arrow-up"></i></button>
+            <button onclick="movePatient(${idx}, 1)" class="px-1.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded" title="Move Down"><i class="fa-solid fa-arrow-down"></i></button>
+            <button onclick="cancelPatientByStaff(${patient.token})" class="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded text-[11px] font-semibold">Cancel</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Update active patient view if registered
+      if (currentActiveToken) {
+        const myPatient = queueList.find(q => q.token === currentActiveToken);
+        if (myPatient) renderPatientTicket(myPatient);
+      }
+    }
+
+    // QUEUE ACTIONS
+    function movePatient(index, direction) {
+      const activeQueue = queueList.filter(q => q.status !== "Completed" && q.status !== "Cancelled");
+      const targetIndex = index + direction;
+      if (targetIndex >= 0 && targetIndex < activeQueue.length) {
+        const temp = activeQueue[index];
+        activeQueue[index] = activeQueue[targetIndex];
+        activeQueue[targetIndex] = temp;
+        renderStaffDashboard();
+      }
+    }
+
+    function cancelPatientByStaff(token) {
+      const patient = queueList.find(q => q.token === token);
+      if (patient) {
+        patient.status = "Cancelled";
+        renderStaffDashboard();
+      }
+    }
+
+    function cancelMyToken() {
+      if (currentActiveToken) {
+        cancelPatientByStaff(currentActiveToken);
+        resetPatientScanner();
+      }
+    }
+
+    // DOCTOR CALL CONTROL
+    function callNextForDoctor(docId) {
+      const doc = doctorRooms[docId];
+      const nextPatient = queueList.find(q => q.status === "Waiting" && (q.doctor === doc.name || q.doctor === "Any Doctor"));
+      if (nextPatient) {
+        nextPatient.status = "In Consultation";
+        doc.token = nextPatient.token;
+        doc.status = "In Consultation";
+        document.getElementById(doc-token-${docId}).innerText = Token #${nextPatient.token};
+        document.getElementById(doc-status-${docId}).className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
+        renderStaffDashboard();
+      }
+    }
+
+    function completeCurrentDoctor(docId) {
+      const doc = doctorRooms[docId];
+      if (doc.token) {
+        const patient = queueList.find(q => q.token === doc.token);
+        if (patient) patient.status = "Completed";
+        doc.token = null;
+        doc.status = "Available";
+        document.getElementById(doc-token-${docId}).innerText = "None (Available)";
+        document.getElementById(doc-status-${docId}).className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+        renderStaffDashboard();
+      }
+    }
+
+    // MODAL CONTROL
+    function openManualAddModal() { document.getElementById("modal-add-patient").classList.remove("hidden"); document.getElementById("modal-add-patient").classList.add("flex"); }
+    function closeManualAddModal() { document.getElementById("modal-add-patient").classList.add("hidden"); document.getElementById("modal-add-patient").classList.remove("flex"); }
+    function openQRModal() { document.getElementById("modal-qr-poster").classList.remove("hidden"); document.getElementById("modal-qr-poster").classList.add("flex"); }
+    function closeQRModal() { document.getElementById("modal-qr-poster").classList.add("hidden"); document.getElementById("modal-qr-poster").classList.remove("flex"); }
+
+    function handleStaffManualSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById("m-name").value;
+      const phone = "+91 " + document.getElementById("m-phone").value;
+      const gender = document.getElementById("m-gender").value;
+      const doctor = document.getElementById("m-doctor").value;
+
+      const newToken = nextTokenNumber++;
+      queueList.push({
+        token: newToken,
+        name: name,
+        phone: phone,
+        gender: gender,
+        doctor: doctor,
+        status: "Waiting"
+      });
+
+      closeManualAddModal();
+      renderStaffDashboard();
+    }
+
+    // DYNAMIC LIVE TIMER
+    function startLiveTimers() {
+      let seconds = 898;
+      setInterval(() => {
+        if (seconds > 0) seconds--;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const timeStr = ${mins}m ${secs < 10 ? '0' : ''}${secs}s;
+        
+        const waTimer = document.getElementById("wa-live-timer");
+        const smsTimer = document.getElementById("sms-live-timer");
+        if (waTimer) waTimer.innerText = ⏱️ ${timeStr};
+        if (smsTimer) smsTimer.innerText = timeStr;
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
