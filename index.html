@@ -104,7 +104,7 @@
                 </button>
               </div>
 
-              <!-- SCREEN 1: REGISTRATION FORM (Fee input removed) -->
+              <!-- SCREEN 1: REGISTRATION FORM (Consultation fee completely removed) -->
               <div id="patient-screen-form" class="hidden space-y-3">
                 <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
                   <p class="text-xs text-blue-800 font-semibold">📍 OPD Queue Registration</p>
@@ -446,7 +446,7 @@
       const name = document.getElementById("p-name").value;
       const phone = "+91 " + document.getElementById("p-phone").value;
       const doctor = document.getElementById("p-doctor").value;
-      const defaultFee = 500; // Default fee assigned automatically for patient self-registration
+      const defaultFee = 500; // Default consultation fee assigned on backend/reception side
 
       const newToken = nextTokenNumber++;
       const newPatient = {
@@ -540,7 +540,7 @@
             </select>
           </td>
 
-          <!-- EDITABLE FEE & PAYMENT BOX -->
+          <!-- EDITABLE FEE & PAYMENT BOX (STAFF SIDE) -->
           <td class="p-3">
             <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-lg border border-slate-200 w-fit">
               <span class="text-slate-400 font-semibold">₹</span>
