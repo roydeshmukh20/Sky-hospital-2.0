@@ -184,10 +184,10 @@
                   </div>
                 </div>
 
-                <!-- WHATSAPP DEEP LINK -->
-                <a id="patient-wa-save-link" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition-all flex items-center justify-center gap-2">
-                  <i class="fa-brands fa-whatsapp text-sm"></i> Send Token Link to My WhatsApp
-                </a>
+                <!-- WHATSAPP SAVE WORKFLOW -->
+                <button onclick="saveTokenToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition-all flex items-center justify-center gap-2">
+                  <i class="fa-brands fa-whatsapp text-sm"></i> Save Token to My WhatsApp
+                </button>
 
                 <button onclick="cancelMyToken()" class="w-full bg-slate-100 hover:bg-rose-50 text-rose-600 font-semibold py-2 rounded-lg text-xs border border-slate-200 transition-colors">
                   <i class="fa-solid fa-xmark mr-1"></i> Cancel Token
@@ -210,7 +210,7 @@
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-lg font-bold text-slate-800">Receptionist Queue & Billing Console</h2>
-            <p class="text-xs text-slate-500">Manage queue stages, update fee values, & collect payments</p>
+            <p class="text-xs text-slate-500">Manage queue stages, update fee values, & payment status</p>
           </div>
           <div class="flex gap-2">
             <button onclick="openManualAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
@@ -240,7 +240,7 @@
                   <th class="p-3">Patient Name</th>
                   <th class="p-3">Doctor</th>
                   <th class="p-3">Queue Status</th>
-                  <th class="p-3">Fee & Payment Box</th>
+                  <th class="p-3">Fee & Payment Status</th>
                   <th class="p-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -447,11 +447,20 @@
         payBadge.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300";
         payBadge.innerText = `₹${patient.paymentAmount} Due (Unpaid)`;
       }
+    }
 
-      const waLink = document.getElementById("patient-wa-save-link");
+    function saveTokenToWhatsApp() {
+      const patient = queueList.find(q => q.token === currentActiveToken);
+      if (!patient) return;
       const pageUrl = window.location.origin + window.location.pathname + `?view=patient&token=${patient.token}`;
-      const waMsg = encodeURIComponent(`🏥 *Sky Multispecialty Hospital*\nHere is my live queue token link. Tap to check wait time:\n${pageUrl}`);
-      waLink.href = `https://wa.me/?text=${waMsg}`;
+      const waMsg = `🏥 *Sky Multispecialty Hospital*\nHere is my live queue token link. Tap to check wait time:\n${pageUrl}`;
+      
+      navigator.clipboard.writeText(waMsg).then(() => {
+        alert("Token link copied to clipboard! Opening WhatsApp... Paste it in your chat to save it.");
+        window.open(`https://wa.me/?text=${encodeURIComponent(waMsg)}`, '_blank');
+      }).catch(() => {
+        window.open(`https://wa.me/?text=${encodeURIComponent(waMsg)}`, '_blank');
+      });
     }
 
     function renderStaffDashboard() {
@@ -472,6 +481,8 @@
         else if (patient.status === 'With Doctor') statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
         else if (patient.status === 'Visit Complete') statusBadgeClass = "bg-slate-100 text-slate-600 border-slate-300";
 
+        let paymentDropdownClass = patient.isPaid ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold" : "bg-rose-100 text-rose-800 border-rose-300 font-bold";
+
         tr.innerHTML = `
           <td class="p-3 font-bold text-blue-700">#${patient.token}</td>
           <td class="p-3">
@@ -480,7 +491,7 @@
           </td>
           <td class="p-3 text-slate-600">${patient.doctor}</td>
           
-          <!-- 4-STAGE STATUS SELECTOR -->
+          <!-- STATUS SELECTOR -->
           <td class="p-3">
             <select onchange="updatePatientStatus(${patient.token}, this.value)" class="text-[11px] font-bold p-1.5 rounded-lg border shadow-sm outline-none ${statusBadgeClass}">
               <option value="Waiting to see Doctor" ${patient.status === 'Waiting to see Doctor' ? 'selected' : ''}>⏳ Waiting to see Doctor</option>
@@ -490,17 +501,15 @@
             </select>
           </td>
 
-          <!-- EDITABLE FEE & PAYMENT BOX -->
+          <!-- EDITABLE FEE & PAYMENT DROPDOWN -->
           <td class="p-3">
             <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-lg border border-slate-200 w-fit">
               <span class="text-slate-400 font-semibold">₹</span>
               <input type="number" value="${patient.paymentAmount}" min="0" step="50" onchange="updatePatientFee(${patient.token}, this.value)" class="w-16 text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-blue-500">
-              ${patient.isPaid 
-                ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-pointer" onclick="togglePayment(${patient.token})" title="Click to mark as unpaid">Paid ✓</span>`
-                : `<button onclick="togglePayment(${patient.token})" class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 hover:bg-emerald-600 hover:text-white text-rose-800 border border-rose-200 transition-all shadow-sm">
-                     Mark Due
-                   </button>`
-              }
+              <select onchange="updatePaymentStatus(${patient.token}, this.value)" class="text-[11px] p-1 rounded border shadow-sm outline-none ${paymentDropdownClass}">
+                <option value="due" ${!patient.isPaid ? 'selected' : ''}>Due</option>
+                <option value="paid" ${patient.isPaid ? 'selected' : ''}>Paid</option>
+              </select>
             </div>
           </td>
 
@@ -536,10 +545,10 @@
       }
     }
 
-    function togglePayment(token) {
+    function updatePaymentStatus(token, statusVal) {
       const patient = queueList.find(q => q.token === token);
       if (patient) {
-        patient.isPaid = !patient.isPaid;
+        patient.isPaid = (statusVal === 'paid');
         renderStaffDashboard();
         if (currentActiveToken === token) {
           renderPatientTicket(patient);
