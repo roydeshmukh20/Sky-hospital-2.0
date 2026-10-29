@@ -185,9 +185,9 @@
                   </div>
                 </div>
 
-                <!-- WHATSAPP DEEP LINK -->
+                <!-- WHATSAPP DEEP LINK (DIRECT TO ME CHAT) -->
                 <a id="patient-wa-save-link" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition-all flex items-center justify-center gap-2">
-                  <i class="fa-brands fa-whatsapp text-sm"></i> Save Token Link on My WhatsApp
+                  <i class="fa-brands fa-whatsapp text-sm"></i> Send Token Link to My WhatsApp
                 </a>
 
                 <button onclick="cancelMyToken()" class="w-full bg-slate-100 hover:bg-rose-50 text-rose-600 font-semibold py-2 rounded-lg text-xs border border-slate-200 transition-colors">
@@ -205,7 +205,7 @@
         </div>
       </section>
 
-      <!-- ================= FRONT DESK STAFF DASHBOARD ================= -->
+      <!-- ================= FRONT DESK STAFF DASHBOARD (SIMPLIFIED) ================= -->
       <section id="staff-container" class="hidden lg:col-span-12 flex flex-col space-y-4">
         
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
@@ -219,60 +219,6 @@
             </button>
             <button onclick="openQRModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
               <i class="fa-solid fa-qrcode"></i> Display QR Poster
-            </button>
-          </div>
-        </div>
-
-        <!-- DOCTOR ROOM CABIN CARDS -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <h3 class="font-bold text-xs text-slate-800">Dr. Patel</h3>
-                <p class="text-[10px] text-slate-500">General Physician (Room 1)</p>
-              </div>
-              <span id="doc-status-1" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded-lg text-xs mb-2 border border-slate-100">
-              <span class="text-[10px] text-slate-400 block">Current Patient:</span>
-              <span id="doc-token-1" class="font-bold text-blue-700 text-xs">Token #101 (Amit)</span>
-            </div>
-            <button onclick="completeCurrentDoctor(1)" class="w-full bg-slate-800 hover:bg-slate-900 text-white text-[11px] py-1.5 rounded-lg font-medium transition-colors">
-              Finish Consultation (Visit Complete)
-            </button>
-          </div>
-
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <h3 class="font-bold text-xs text-slate-800">Dr. Sonone</h3>
-                <p class="text-[10px] text-slate-500">Pediatrician (Room 2)</p>
-              </div>
-              <span id="doc-status-2" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded-lg text-xs mb-2 border border-slate-100">
-              <span class="text-[10px] text-slate-400 block">Current Patient:</span>
-              <span id="doc-token-2" class="font-bold text-slate-400 text-xs">None (Available)</span>
-            </div>
-            <button onclick="callNextForDoctor(2)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] py-1.5 rounded-lg font-medium transition-colors">
-              Call Next Patient
-            </button>
-          </div>
-
-          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="flex justify-between items-start mb-2">
-              <div>
-                <h3 class="font-bold text-xs text-slate-800">Dr. Rathi</h3>
-                <p class="text-[10px] text-slate-500">Orthopedics (Room 3)</p>
-              </div>
-              <span id="doc-status-3" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-            </div>
-            <div class="bg-slate-50 p-2 rounded-lg text-xs mb-2 border border-slate-100">
-              <span class="text-[10px] text-slate-400 block">Current Patient:</span>
-              <span id="doc-token-3" class="font-bold text-slate-400 text-xs">None (Available)</span>
-            </div>
-            <button onclick="callNextForDoctor(3)" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] py-1.5 rounded-lg font-medium transition-colors">
-              Call Next Patient
             </button>
           </div>
         </div>
@@ -294,7 +240,7 @@
                   <th class="p-3">Token</th>
                   <th class="p-3">Patient Name</th>
                   <th class="p-3">Doctor</th>
-                  <th class="p-3">Queue Status (4 Stages)</th>
+                  <th class="p-3">Queue Status</th>
                   <th class="p-3">Fee & Payment Box</th>
                   <th class="p-3 text-right">Actions</th>
                 </tr>
@@ -389,16 +335,25 @@
       { token: 103, name: "Rahul Verma", phone: "+91 9988776655", doctor: "Dr. Rathi", status: "Waiting to see Doctor", paymentAmount: 500, isPaid: false }
     ];
 
-    let doctorRooms = {
-      1: { name: "Dr. Patel", token: 101, status: "In Consultation" },
-      2: { name: "Dr. Sonone", token: null, status: "Available" },
-      3: { name: "Dr. Rathi", token: null, status: "Available" }
-    };
-
     document.addEventListener("DOMContentLoaded", () => {
       const urlParams = new URLSearchParams(window.location.search);
       const view = urlParams.get('view');
-      if (view === 'staff') {
+      const tokenParam = urlParams.get('token');
+
+      // If a patient opens a shared WhatsApp token link directly, jump straight to their ticket tracker
+      if (tokenParam) {
+        const found = queueList.find(q => q.token == tokenParam);
+        if (found) {
+          currentActiveToken = found.token;
+          setViewMode('patient');
+          document.getElementById("patient-screen-scan").classList.add("hidden");
+          document.getElementById("patient-screen-form").classList.add("hidden");
+          document.getElementById("patient-screen-ticket").classList.remove("hidden");
+          renderPatientTicket(found);
+        } else {
+          setViewMode('patient');
+        }
+      } else if (view === 'staff') {
         setViewMode('staff');
       } else {
         setViewMode('patient');
@@ -495,9 +450,10 @@
         payBadge.innerText = `₹${patient.paymentAmount} Due (Unpaid)`;
       }
 
+      // Updated WhatsApp link: Uses wa.me/?text= to message yourself / send link to your chat cleanly
       const waLink = document.getElementById("patient-wa-save-link");
       const pageUrl = window.location.origin + window.location.pathname + `?view=patient&token=${patient.token}`;
-      const waMsg = encodeURIComponent(`Hi, here is my Sky Hospital token link: ${pageUrl}`);
+      const waMsg = encodeURIComponent(`🏥 *Sky Multispecialty Hospital*\nHere is my live queue token link. Tap to check wait time:\n${pageUrl}`);
       waLink.href = `https://wa.me/?text=${waMsg}`;
     }
 
@@ -559,25 +515,12 @@
         `;
         tbody.appendChild(tr);
       });
-
-      updateDoctorRoomUI();
     }
 
     function updatePatientStatus(token, newStatus) {
       const patient = queueList.find(q => q.token === token);
       if (patient) {
         patient.status = newStatus;
-
-        if (newStatus === "With Doctor") {
-          for (let key in doctorRooms) {
-            if (doctorRooms[key].name === patient.doctor || patient.doctor === "Any Doctor") {
-              doctorRooms[key].token = patient.token;
-              doctorRooms[key].status = "In Consultation";
-              break;
-            }
-          }
-        }
-
         renderStaffDashboard();
         if (currentActiveToken === token) {
           renderPatientTicket(patient);
@@ -620,61 +563,6 @@
         const patient = queueList.find(q => q.token === currentActiveToken);
         if (patient) patient.status = "Cancelled";
         resetPatientScanner();
-        renderStaffDashboard();
-      }
-    }
-
-    function updateDoctorRoomUI() {
-      for (let roomId in doctorRooms) {
-        const room = doctorRooms[roomId];
-        const tokenElem = document.getElementById(`doc-token-${roomId}`);
-        const statusElem = document.getElementById(`doc-status-${roomId}`);
-
-        if (room.token) {
-          const patient = queueList.find(q => q.token === room.token);
-          tokenElem.innerText = `Token #${room.token} (${patient ? patient.name.split(' ')[0] : ''})`;
-          tokenElem.className = "font-bold text-blue-700 text-xs";
-          statusElem.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
-        } else {
-          tokenElem.innerText = "None (Available)";
-          tokenElem.className = "font-bold text-slate-400 text-xs";
-          statusElem.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
-        }
-      }
-    }
-
-    function callNextForDoctor(roomId) {
-      const room = doctorRooms[roomId];
-      const eligiblePatient = queueList.find(q => 
-        (q.doctor === room.name || q.doctor === "Any Doctor") && 
-        q.status === "Waiting to see Doctor"
-      );
-
-      if (eligiblePatient) {
-        eligiblePatient.status = "With Doctor";
-        room.token = eligiblePatient.token;
-        room.status = "In Consultation";
-        renderStaffDashboard();
-        if (currentActiveToken === eligiblePatient.token) {
-          renderPatientTicket(eligiblePatient);
-        }
-      } else {
-        alert(`No waiting patients for ${room.name}`);
-      }
-    }
-
-    function completeCurrentDoctor(roomId) {
-      const room = doctorRooms[roomId];
-      if (room.token) {
-        const patient = queueList.find(q => q.token === room.token);
-        if (patient) {
-          patient.status = "Visit Complete";
-          if (currentActiveToken === patient.token) {
-            renderPatientTicket(patient);
-          }
-        }
-        room.token = null;
-        room.status = "Available";
         renderStaffDashboard();
       }
     }
