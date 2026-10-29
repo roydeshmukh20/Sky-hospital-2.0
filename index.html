@@ -42,10 +42,7 @@
       
       <!-- View Switcher -->
       <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs sm:text-sm">
-        <button id="nav-btn-both" onclick="setViewMode('both')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white">
-          <i class="fa-solid fa-columns mr-1.5"></i> Dual View
-        </button>
-        <button id="nav-btn-patient" onclick="setViewMode('patient')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
+        <button id="nav-btn-patient" onclick="setViewMode('patient')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white">
           <i class="fa-solid fa-mobile-screen mr-1.5"></i> Patient App
         </button>
         <button id="nav-btn-staff" onclick="setViewMode('staff')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
@@ -57,10 +54,10 @@
 
   <!-- MAIN CONTAINER -->
   <main class="max-w-7xl mx-auto p-4 sm:p-6">
-    <div id="app-grid" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div id="app-grid" class="max-w-md mx-auto">
 
       <!-- ================= PATIENT MOBILE APP ================= -->
-      <section id="patient-container" class="lg:col-span-4 flex flex-col items-center">
+      <section id="patient-container" class="w-full flex flex-col items-center">
         <div class="w-full max-w-sm bg-black p-3 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
           
           <div class="w-32 h-4 bg-slate-900 mx-auto rounded-b-xl mb-2 flex justify-center items-center">
@@ -215,7 +212,7 @@
       </section>
 
       <!-- ================= FRONT DESK STAFF DASHBOARD ================= -->
-      <section id="staff-container" class="lg:col-span-8 flex flex-col space-y-4">
+      <section id="staff-container" class="hidden lg:col-span-12 flex flex-col space-y-4">
         
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -411,6 +408,8 @@
       const view = urlParams.get('view');
       if (view === 'patient' || view === 'staff') {
         setViewMode(view);
+      } else {
+        setViewMode('patient');
       }
       renderStaffDashboard();
     });
@@ -425,12 +424,7 @@
         btn.classList.add('text-slate-300');
       });
 
-      if (mode === 'patient') {
-        patientCol.classList.remove('hidden');
-        staffCol.classList.add('hidden');
-        appGrid.className = "max-w-md mx-auto";
-        document.getElementById("nav-btn-patient").classList.add('bg-blue-600', 'text-white');
-      } else if (mode === 'staff') {
+      if (mode === 'staff') {
         patientCol.classList.add('hidden');
         staffCol.classList.remove('hidden');
         staffCol.className = "lg:col-span-12 flex flex-col space-y-4";
@@ -438,10 +432,9 @@
         document.getElementById("nav-btn-staff").classList.add('bg-blue-600', 'text-white');
       } else {
         patientCol.classList.remove('hidden');
-        staffCol.classList.remove('hidden');
-        staffCol.className = "lg:col-span-8 flex flex-col space-y-4";
-        appGrid.className = "grid grid-cols-1 lg:grid-cols-12 gap-6";
-        document.getElementById("nav-btn-both").classList.add('bg-blue-600', 'text-white');
+        staffCol.classList.add('hidden');
+        appGrid.className = "max-w-md mx-auto";
+        document.getElementById("nav-btn-patient").classList.add('bg-blue-600', 'text-white');
       }
     }
 
@@ -491,7 +484,7 @@
       // Status Badge Styling
       const statusBadge = document.getElementById("ticket-status-badge");
       statusBadge.innerText = patient.status;
-      if (patient.status === 'In Doctor\'s Room') {
+      if (patient.status === "In Doctor's Room") {
         statusBadge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
       } else if (patient.status === 'Patient Checked In') {
         statusBadge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300";
@@ -535,7 +528,7 @@
         let statusBadgeClass = "";
         if (patient.status === 'Not Checked In') statusBadgeClass = "bg-amber-100 text-amber-800 border-amber-300";
         else if (patient.status === 'Patient Checked In') statusBadgeClass = "bg-blue-100 text-blue-800 border-blue-300";
-        else if (patient.status === 'In Doctor\'s Room') statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
+        else if (patient.status === "In Doctor's Room") statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
         else if (patient.status === 'Checked Out') statusBadgeClass = "bg-slate-100 text-slate-600 border-slate-300";
 
         tr.innerHTML = `
@@ -570,83 +563,132 @@
           </td>
 
           <td class="p-3 text-right">
-            <button onclick="cancelPatientByStaff(${patient.token})" class="px-2 py-1 bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 rounded text-[11px] font-medium transition-colors">
-              Cancel
+            <button onclick="cancelPatientByStaff(${patient.token})" class="px-2 py-1 bg-slate-100 hover:bg-rose-100 text-rose-600 rounded text-xs transition-colors" title="Cancel Patient Token">
+              <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
         `;
         tbody.appendChild(tr);
       });
 
-      if (currentActiveToken) {
-        const myPatient = queueList.find(q => q.token === currentActiveToken);
-        if (myPatient) renderPatientTicket(myPatient);
-      }
+      updateDoctorRoomUI();
     }
 
-    // UPDATE PATIENT STAGE STATUS
     function updatePatientStatus(token, newStatus) {
       const patient = queueList.find(q => q.token === token);
       if (patient) {
         patient.status = newStatus;
+
+        // If moved to Doctor's Room manually, update cabin cards
+        if (newStatus === "In Doctor's Room") {
+          for (let key in doctorRooms) {
+            if (doctorRooms[key].name === patient.doctor || patient.doctor === "Any Doctor") {
+              doctorRooms[key].token = patient.token;
+              doctorRooms[key].status = "In Consultation";
+              break;
+            }
+          }
+        }
+
         renderStaffDashboard();
+        if (currentActiveToken === token) {
+          renderPatientTicket(patient);
+        }
       }
     }
 
-    // TOGGLE PAYMENT TO PAID
     function togglePayment(token) {
       const patient = queueList.find(q => q.token === token);
       if (patient) {
-        patient.isPaid = true;
+        patient.isPaid = !patient.isPaid;
         renderStaffDashboard();
+        if (currentActiveToken === token) {
+          renderPatientTicket(patient);
+        }
       }
     }
 
     function cancelPatientByStaff(token) {
       const patient = queueList.find(q => q.token === token);
-      if (patient) {
+      if (patient && confirm(`Are you sure you want to cancel Token #${token}?`)) {
         patient.status = "Cancelled";
         renderStaffDashboard();
       }
     }
 
     function cancelMyToken() {
-      if (currentActiveToken) {
-        cancelPatientByStaff(currentActiveToken);
+      if (currentActiveToken && confirm("Are you sure you want to cancel your queue token?")) {
+        const patient = queueList.find(q => q.token === currentActiveToken);
+        if (patient) patient.status = "Cancelled";
         resetPatientScanner();
-      }
-    }
-
-    function callNextForDoctor(docId) {
-      const doc = doctorRooms[docId];
-      const nextPatient = queueList.find(q => (q.status === "Patient Checked In" || q.status === "Not Checked In") && (q.doctor === doc.name || q.doctor === "Any Doctor"));
-      if (nextPatient) {
-        nextPatient.status = "In Doctor's Room";
-        doc.token = nextPatient.token;
-        doc.status = "In Consultation";
-        document.getElementById(`doc-token-${docId}`).innerText = `Token #${nextPatient.token} (${nextPatient.name})`;
-        document.getElementById(`doc-status-${docId}`).className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
         renderStaffDashboard();
       }
     }
 
-    function completeCurrentDoctor(docId) {
-      const doc = doctorRooms[docId];
-      if (doc.token) {
-        const patient = queueList.find(q => q.token === doc.token);
-        if (patient) patient.status = "Checked Out";
-        doc.token = null;
-        doc.status = "Available";
-        document.getElementById(`doc-token-${docId}`).innerText = "None (Available)";
-        document.getElementById(`doc-status-${docId}`).className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+    function updateDoctorRoomUI() {
+      for (let roomId in doctorRooms) {
+        const room = doctorRooms[roomId];
+        const tokenElem = document.getElementById(`doc-token-${roomId}`);
+        const statusElem = document.getElementById(`doc-status-${roomId}`);
+
+        if (room.token) {
+          const patient = queueList.find(q => q.token === room.token);
+          tokenElem.innerText = `Token #${room.token} (${patient ? patient.name.split(' ')[0] : ''})`;
+          tokenElem.className = "font-bold text-blue-700 text-xs";
+          statusElem.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
+        } else {
+          tokenElem.innerText = "None (Available)";
+          tokenElem.className = "font-bold text-slate-400 text-xs";
+          statusElem.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+        }
+      }
+    }
+
+    function callNextForDoctor(roomId) {
+      const room = doctorRooms[roomId];
+      const eligiblePatient = queueList.find(q => 
+        (q.doctor === room.name || q.doctor === "Any Doctor") && 
+        (q.status === "Patient Checked In" || q.status === "Not Checked In")
+      );
+
+      if (eligiblePatient) {
+        eligiblePatient.status = "In Doctor's Room";
+        room.token = eligiblePatient.token;
+        room.status = "In Consultation";
+        renderStaffDashboard();
+        if (currentActiveToken === eligiblePatient.token) {
+          renderPatientTicket(eligiblePatient);
+        }
+      } else {
+        alert(`No waiting patients for ${room.name}`);
+      }
+    }
+
+    function completeCurrentDoctor(roomId) {
+      const room = doctorRooms[roomId];
+      if (room.token) {
+        const patient = queueList.find(q => q.token === room.token);
+        if (patient) {
+          patient.status = "Checked Out";
+          if (currentActiveToken === patient.token) {
+            renderPatientTicket(patient);
+          }
+        }
+        room.token = null;
+        room.status = "Available";
         renderStaffDashboard();
       }
     }
 
-    function openManualAddModal() { document.getElementById("modal-add-patient").classList.remove("hidden"); document.getElementById("modal-add-patient").classList.add("flex"); }
-    function closeManualAddModal() { document.getElementById("modal-add-patient").classList.add("hidden"); document.getElementById("modal-add-patient").classList.remove("flex"); }
-    function openQRModal() { document.getElementById("modal-qr-poster").classList.remove("hidden"); document.getElementById("modal-qr-poster").classList.add("flex"); }
-    function closeQRModal() { document.getElementById("modal-qr-poster").classList.add("hidden"); document.getElementById("modal-qr-poster").classList.remove("flex"); }
+    function openManualAddModal() {
+      document.getElementById("modal-add-patient").classList.remove("hidden");
+      document.getElementById("modal-add-patient").classList.add("flex");
+    }
+
+    function closeManualAddModal() {
+      document.getElementById("modal-add-patient").classList.add("hidden");
+      document.getElementById("modal-add-patient").classList.remove("flex");
+    }
 
     function handleStaffManualSubmit(e) {
       e.preventDefault();
@@ -655,20 +697,30 @@
       const doctor = document.getElementById("m-doctor").value;
 
       const newToken = nextTokenNumber++;
-      queueList.push({
+      const newPatient = {
         token: newToken,
         name: name,
         phone: phone,
         doctor: doctor,
-        status: "Not Checked In",
+        status: "Patient Checked In",
         paymentAmount: 500,
         isPaid: false
-      });
+      };
 
-      closeManualAddModal();
+      queueList.push(newPatient);
       renderStaffDashboard();
+      closeManualAddModal();
+    }
+
+    function openQRModal() {
+      document.getElementById("modal-qr-poster").classList.remove("hidden");
+      document.getElementById("modal-qr-poster").classList.add("flex");
+    }
+
+    function closeQRModal() {
+      document.getElementById("modal-qr-poster").classList.add("hidden");
+      document.getElementById("modal-qr-poster").classList.remove("flex");
     }
   </script>
 </body>
 </html>
-
