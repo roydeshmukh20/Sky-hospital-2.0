@@ -84,7 +84,6 @@
               <!-- SCREEN 0: SCAN QR CODE -->
               <div id="patient-screen-scan" class="flex flex-col items-center justify-center h-full text-center py-6">
                 <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 w-full">
-                  <span class="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full mb-2">Patient Portal</span>
                   <h3 class="font-bold text-slate-800 text-base mb-1">Welcome to Sky Hospital</h3>
                   <p class="text-xs text-slate-600">Scan hospital front desk QR code to join today's OPD Queue</p>
                 </div>
@@ -185,7 +184,7 @@
                   </div>
                 </div>
 
-                <!-- WHATSAPP DEEP LINK (DIRECT TO ME CHAT) -->
+                <!-- WHATSAPP DEEP LINK -->
                 <a id="patient-wa-save-link" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition-all flex items-center justify-center gap-2">
                   <i class="fa-brands fa-whatsapp text-sm"></i> Send Token Link to My WhatsApp
                 </a>
@@ -205,7 +204,7 @@
         </div>
       </section>
 
-      <!-- ================= FRONT DESK STAFF DASHBOARD (SIMPLIFIED) ================= -->
+      <!-- ================= FRONT DESK STAFF DASHBOARD ================= -->
       <section id="staff-container" class="hidden lg:col-span-12 flex flex-col space-y-4">
         
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
@@ -340,7 +339,6 @@
       const view = urlParams.get('view');
       const tokenParam = urlParams.get('token');
 
-      // If a patient opens a shared WhatsApp token link directly, jump straight to their ticket tracker
       if (tokenParam) {
         const found = queueList.find(q => q.token == tokenParam);
         if (found) {
@@ -450,7 +448,6 @@
         payBadge.innerText = `₹${patient.paymentAmount} Due (Unpaid)`;
       }
 
-      // Updated WhatsApp link: Uses wa.me/?text= to message yourself / send link to your chat cleanly
       const waLink = document.getElementById("patient-wa-save-link");
       const pageUrl = window.location.origin + window.location.pathname + `?view=patient&token=${patient.token}`;
       const waMsg = encodeURIComponent(`🏥 *Sky Multispecialty Hospital*\nHere is my live queue token link. Tap to check wait time:\n${pageUrl}`);
