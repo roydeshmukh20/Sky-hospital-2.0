@@ -16,7 +16,7 @@
       animation: scanBeam 2.5s infinite ease-in-out;
     }
     .custom-scrollbar::-webkit-scrollbar {
-      width: 6px;
+      width: 4px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
       background: #f1f5f9;
@@ -24,6 +24,16 @@
     .custom-scrollbar::-webkit-scrollbar-thumb {
       background: #cbd5e1;
       border-radius: 4px;
+    }
+    .draggable-row {
+      cursor: grab;
+    }
+    .draggable-row:active {
+      cursor: grabbing;
+    }
+    .drag-over {
+      background-color: #eff6ff !important;
+      border-top: 2px dashed #3b82f6;
     }
   </style>
 </head>
@@ -39,7 +49,7 @@
         <div class="bg-blue-600 text-white p-2 rounded-lg font-bold">🏥 Sky</div>
         <div>
           <h1 class="font-bold text-sm sm:text-base leading-tight">Sky Multispecialty Hospital</h1>
-          <p class="text-xs text-slate-400">Advanced OPD Queue & Appointment Management</p>
+          <p class="text-xs text-slate-400">Mobile-Responsive Queue & Schedule Manager</p>
         </div>
       </div>
       
@@ -56,8 +66,8 @@
   </header>
 
   <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto p-4 sm:p-6">
-    <div id="app-grid" class="max-w-md mx-auto">
+  <main class="max-w-7xl mx-auto p-4 sm:p-6 flex justify-center">
+    <div id="app-wrapper" class="w-full flex justify-center">
 
       <!-- ================= PATIENT MOBILE APP ================= -->
       <section id="patient-container" class="w-full flex flex-col items-center">
@@ -73,7 +83,7 @@
               <div class="flex items-center gap-2">
                 <i class="fa-solid fa-hospital text-xl"></i>
                 <div>
-                  <h2 class="font-bold text-sm leading-tight">Sky Multispecialty Hospital</h2>
+                  <h2 class="font-bold text-sm leading-tight">Sky Hospital</h2>
                   <p class="text-[10px] text-blue-200">Digital Token & Queue Tracker</p>
                 </div>
               </div>
@@ -110,7 +120,7 @@
               <div id="patient-screen-form" class="hidden space-y-3">
                 <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
                   <p class="text-xs text-blue-800 font-semibold">📍 OPD Queue Registration</p>
-                  <p class="text-[11px] text-blue-600">Fill details or book a specific time slot</p>
+                  <p class="text-[11px] text-blue-600">Fill details or book a specific time slot (10 min slots)</p>
                 </div>
 
                 <form id="patient-reg-form" onsubmit="handlePatientSubmit(event)" class="space-y-3 text-left">
@@ -137,7 +147,7 @@
                       </select>
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1">Appt Time (Optional)</label>
+                      <label class="block text-xs font-bold text-slate-700 mb-1">Appt Time (10m)</label>
                       <input type="time" id="p-time" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
                     </div>
                   </div>
@@ -190,7 +200,7 @@
 
                   <div class="flex justify-between items-center">
                     <span class="text-slate-500">Est. Waiting Time:</span>
-                    <span id="ticket-wait-time" class="font-bold text-blue-600">~15 mins</span>
+                    <span id="ticket-wait-time" class="font-bold text-blue-600">~10 mins</span>
                   </div>
                 </div>
 
@@ -214,60 +224,48 @@
         </div>
       </section>
 
-      <!-- ================= FRONT DESK STAFF DASHBOARD ================= -->
-      <section id="staff-container" class="hidden lg:col-span-12 flex flex-col space-y-4">
-        
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-lg font-bold text-slate-800">Receptionist Queue & Appointment Console</h2>
-            <p class="text-xs text-slate-500">Prioritize queue, set doctor schedules, & dispatch emergency delay alerts</p>
+      <!-- ================= FRONT DESK STAFF DASHBOARD (RESPONSIVE SMARTPHONE FRAME) ================= -->
+      <section id="staff-container" class="hidden w-full flex flex-col items-center">
+        <div class="w-full max-w-sm bg-black p-3 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
+          
+          <div class="w-32 h-4 bg-slate-900 mx-auto rounded-b-xl mb-2 flex justify-center items-center">
+            <div class="w-12 h-1 bg-slate-700 rounded-full"></div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <button onclick="openScheduleModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-              <i class="fa-solid fa-calendar-days"></i> 7-Day Schedules
-            </button>
-            <button onclick="openEmergencyModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-              <i class="fa-solid fa-triangle-exclamation"></i> Emergency Block
-            </button>
-            <button onclick="openManualAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-              <i class="fa-solid fa-plus"></i> Add Patient / Appt
-            </button>
-            <button onclick="openQRModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5">
-              <i class="fa-solid fa-qrcode"></i> QR Poster
-            </button>
-          </div>
-        </div>
 
-        <!-- REAL-TIME QUEUE & PRIORITY TABLE -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
-          <div class="p-3.5 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-              <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Live OPD Patient Queue & Priority Management</h3>
-              <span id="queue-count-badge" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">3 Active</span>
+          <div class="bg-slate-50 rounded-[30px] overflow-hidden min-h-[670px] flex flex-col text-slate-800 border border-slate-200 relative">
+            
+            <div class="bg-slate-900 text-white p-3 shadow-sm flex items-center justify-between">
+              <div>
+                <h2 class="font-bold text-xs leading-tight">Receptionist Console</h2>
+                <p class="text-[9px] text-slate-400">Drag & Drop Priority & Management</p>
+              </div>
+              <div class="flex gap-1">
+                <button onclick="openScheduleModal()" title="Add Doctor Schedule" class="bg-slate-800 hover:bg-slate-700 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-calendar-days"></i></button>
+                <button onclick="openEmergencyModal()" title="Emergency Block" class="bg-rose-600 hover:bg-rose-700 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-triangle-exclamation"></i></button>
+                <button onclick="openManualAddModal()" title="Add Patient" class="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="openQRModal()" title="QR Code" class="bg-slate-700 hover:bg-slate-600 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-qrcode"></i></button>
+              </div>
             </div>
-            <span class="text-[11px] text-slate-500">Use Up/Down arrows to adjust priority</span>
-          </div>
 
-          <div class="overflow-x-auto flex-1 custom-scrollbar">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-100 text-slate-500 font-semibold border-b border-slate-200">
-                  <th class="p-3">Priority / Token</th>
-                  <th class="p-3">Patient Name & Phone</th>
-                  <th class="p-3">Doctor</th>
-                  <th class="p-3">Scheduled Appt Time</th>
-                  <th class="p-3">Queue Status</th>
-                  <th class="p-3">Fee & Payment</th>
-                  <th class="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="staff-queue-tbody" class="divide-y divide-slate-100">
-                <!-- Dynamically populated via JS -->
-              </tbody>
-            </table>
+            <div class="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
+              <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-700">Active OPD Queue</span>
+                <span id="queue-count-badge" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">3 Active</span>
+              </div>
+              <p class="text-[10px] text-slate-500 italic text-center">💡 Tip: Drag & drop rows up/down to reorder priority.</p>
+
+              <!-- DRAGGABLE QUEUE LIST CONTAINER -->
+              <div id="staff-queue-cards" class="space-y-2">
+                <!-- Dynamically populated cards via JS -->
+              </div>
+            </div>
+
+            <div class="p-2 text-center bg-slate-100 border-t border-slate-200">
+              <div class="w-24 h-1 bg-slate-400 rounded-full mx-auto"></div>
+            </div>
+
           </div>
         </div>
-
       </section>
 
     </div>
@@ -276,123 +274,117 @@
   <!-- MODALS -->
   <!-- ADD PATIENT / APPT MODAL -->
   <div id="modal-add-patient" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200">
-      <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
-        <h3 class="font-bold text-base text-slate-800">Add Patient / Book Appointment</h3>
-        <button onclick="closeManualAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
+        <h3 class="font-bold text-sm text-slate-800">Add Patient / 10m Appt</h3>
+        <button onclick="closeManualAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <form onsubmit="handleStaffManualSubmit(event)" class="space-y-3">
+      <form onsubmit="handleStaffManualSubmit(event)" class="space-y-2.5 text-xs">
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Patient Full Name *</label>
-          <input type="text" id="m-name" required placeholder="Full Name" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+          <label class="block font-bold text-slate-700 mb-1">Full Name *</label>
+          <input type="text" id="m-name" required placeholder="Full Name" class="w-full p-2 rounded-lg border border-slate-300">
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Mobile Number *</label>
-          <div class="flex gap-1.5">
-            <span class="bg-slate-100 text-slate-700 text-xs font-bold px-2.5 py-2.5 rounded-lg border border-slate-300">+91</span>
-            <input type="tel" id="m-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
-          </div>
+          <label class="block font-bold text-slate-700 mb-1">Mobile Number *</label>
+          <input type="tel" id="m-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full p-2 rounded-lg border border-slate-300">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Gender</label>
-            <select id="m-gender" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
+            <label class="block font-bold text-slate-700 mb-1">Gender</label>
+            <select id="m-gender" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Appointment Time</label>
-            <input type="time" id="m-time" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
+            <label class="block font-bold text-slate-700 mb-1">Appt Time (10m)</label>
+            <input type="time" id="m-time" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Doctor Assigned</label>
-            <select id="m-doctor" class="w-full text-xs p-2.5 rounded-lg border border-slate-300">
-              <option value="Any Doctor">General Queue (Any Doctor)</option>
+            <label class="block font-bold text-slate-700 mb-1">Doctor</label>
+            <select id="m-doctor" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
+              <option value="Any Doctor">Any Doctor</option>
               <option value="Dr. Patel">Dr. Patel</option>
               <option value="Dr. Sonone">Dr. Sonone</option>
               <option value="Dr. Rathi">Dr. Rathi</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Consultation Fee (₹)</label>
-            <input type="number" id="m-fee" value="500" min="0" step="50" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-bold">
+            <label class="block font-bold text-slate-700 mb-1">Fee (₹)</label>
+            <input type="number" id="m-fee" value="500" min="0" step="50" class="w-full p-2 rounded-lg border border-slate-300 font-bold">
           </div>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeManualAddModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-          <button type="submit" class="px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Book & Notify Appt</button>
+          <button type="button" onclick="closeManualAddModal()" class="px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button type="submit" class="px-3 py-1.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Book & Notify</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- 7-DAY DOCTOR SCHEDULE MODAL -->
+  <!-- ADD DOCTOR SCHEDULE MODAL -->
   <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl border border-slate-200 space-y-3">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-2xl border border-slate-200 space-y-3 text-xs">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-base text-slate-800">Doctor 7-Day Availability Roster</h3>
-        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="font-bold text-sm text-slate-800">Add Doctor Schedule (7-Day)</h3>
+        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="text-xs text-slate-500">Manage advance doctor timings and shift availability over the next 7 days.</p>
+      <p class="text-[11px] text-slate-500">Configure advance shift availability for selected doctors.</p>
       
-      <div class="overflow-x-auto max-h-80 custom-scrollbar">
-        <table class="w-full text-left text-xs border-collapse">
-          <thead>
-            <tr class="bg-slate-100 text-slate-600">
-              <th class="p-2">Doctor</th>
-              <th class="p-2">Day 1 (Today)</th>
-              <th class="p-2">Day 2</th>
-              <th class="p-2">Day 3</th>
-              <th class="p-2">Day 4</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100" id="schedule-tbody">
-            <tr>
-              <td class="p-2 font-bold">Dr. Patel</td>
-              <td class="p-2"><input type="text" value="09:00 - 14:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="09:00 - 14:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="Off" class="w-24 text-[10px] p-1 border rounded bg-rose-50 text-rose-700 font-semibold"></td>
-              <td class="p-2"><input type="text" value="09:00 - 14:00" class="w-24 text-[10px] p-1 border rounded"></td>
-            </tr>
-            <tr>
-              <td class="p-2 font-bold">Dr. Sonone</td>
-              <td class="p-2"><input type="text" value="10:00 - 17:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="10:00 - 17:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="10:00 - 17:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="Off" class="w-24 text-[10px] p-1 border rounded bg-rose-50 text-rose-700 font-semibold"></td>
-            </tr>
-            <tr>
-              <td class="p-2 font-bold">Dr. Rathi</td>
-              <td class="p-2"><input type="text" value="12:00 - 20:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="Off" class="w-24 text-[10px] p-1 border rounded bg-rose-50 text-rose-700 font-semibold"></td>
-              <td class="p-2"><input type="text" value="12:00 - 20:00" class="w-24 text-[10px] p-1 border rounded"></td>
-              <td class="p-2"><input type="text" value="12:00 - 20:00" class="w-24 text-[10px] p-1 border rounded"></td>
-            </tr>
-          </tbody>
-        </table>
+      <div>
+        <label class="block font-bold text-slate-700 mb-1">Select Doctor</label>
+        <select id="sched-doctor" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
+          <option value="Dr. Patel">Dr. Patel (General Physician)</option>
+          <option value="Dr. Sonone">Dr. Sonone (Pediatrician)</option>
+          <option value="Dr. Rathi">Dr. Rathi (Orthopedics)</option>
+        </select>
       </div>
-      <div class="flex justify-end pt-2">
-        <button onclick="saveSchedule()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg">Save Roster</button>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Shift Start</label>
+          <input type="time" id="sched-start" value="09:00" class="w-full p-2 rounded-lg border border-slate-300">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Shift End</label>
+          <input type="time" id="sched-end" value="14:00" class="w-full p-2 rounded-lg border border-slate-300">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 mb-1">Days Active</label>
+        <div class="flex flex-wrap gap-1 text-[10px]">
+          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Mon</label>
+          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Tue</label>
+          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Wed</label>
+          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Thu</label>
+          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Fri</label>
+          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox"> Sat</label>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 gap-2">
+        <button type="button" onclick="closeScheduleModal()" class="px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="saveSchedule()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg">Save Schedule</button>
       </div>
     </div>
   </div>
 
-  <!-- EMERGENCY DELAY BLOCK MODAL -->
+  <!-- EMERGENCY BLOCK MODAL -->
   <div id="modal-emergency" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-3">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-2xl border border-slate-200 space-y-3 text-xs">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-base text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency OPD Delay Block</h3>
-        <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="font-bold text-sm text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency Block</h3>
+        <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="text-xs text-slate-600">Doctor called for emergency surgery/operation. Select block duration to auto-adjust waiting times and notify patients.</p>
+      <p class="text-[11px] text-slate-600">Select doctor called for emergency operation to adjust wait times and notify patients.</p>
       
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Select Doctor</label>
-        <select id="emergency-doctor" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
+        <label class="block font-bold text-slate-700 mb-1">Select Doctor</label>
+        <select id="emergency-doctor" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
           <option value="Dr. Patel">Dr. Patel</option>
           <option value="Dr. Sonone">Dr. Sonone</option>
           <option value="Dr. Rathi">Dr. Rathi</option>
@@ -401,8 +393,8 @@
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-700 mb-1">Delay Duration / Unavailability</label>
-        <select id="emergency-duration" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
+        <label class="block font-bold text-slate-700 mb-1">Delay Duration / Unavailability</label>
+        <select id="emergency-duration" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
           <option value="30">30 Minutes Delay</option>
           <option value="60">1 Hour Delay</option>
           <option value="90">1.5 Hours Delay</option>
@@ -412,8 +404,8 @@
       </div>
 
       <div class="pt-2 flex justify-end gap-2">
-        <button type="button" onclick="closeEmergencyModal()" class="px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-        <button onclick="triggerEmergencyBlock()" class="px-4 py-2 text-xs font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow">Apply & Notify Patients</button>
+        <button type="button" onclick="closeEmergencyModal()" class="px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="triggerEmergencyBlock()" class="px-3 py-1.5 font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow">Apply & Notify</button>
       </div>
     </div>
   </div>
@@ -438,12 +430,12 @@
 
   <!-- JAVASCRIPT APP LOGIC -->
   <script>
-    let nextTokenNumber = 104;
     let currentActiveToken = null;
+    let draggedIndex = null;
 
     let queueList = [
       { token: 101, name: "Amit Sharma", phone: "9823011223", doctor: "Dr. Patel", apptTime: "09:30", status: "With Doctor", paymentAmount: 500, isPaid: true },
-      { token: 102, name: "Priya Deshmukh", phone: "9765432109", doctor: "Dr. Sonone", apptTime: "10:00", status: "Waiting to see Doctor", paymentAmount: 500, isPaid: false },
+      { token: 102, name: "Priya Deshmukh", phone: "9765432109", doctor: "Dr. Sonone", apptTime: "09:40", status: "Waiting to see Doctor", paymentAmount: 500, isPaid: false },
       { token: 103, name: "Rahul Verma", phone: "9988776655", doctor: "Dr. Rathi", apptTime: "", status: "Waiting to see Doctor", paymentAmount: 500, isPaid: false }
     ];
 
@@ -476,7 +468,7 @@
     function setViewMode(mode) {
       const patientCol = document.getElementById("patient-container");
       const staffCol = document.getElementById("staff-container");
-      const appGrid = document.getElementById("app-grid");
+      const appWrapper = document.getElementById("app-wrapper");
 
       document.querySelectorAll('[id^="nav-btn-"]').forEach(btn => {
         btn.classList.remove('bg-blue-600', 'text-white');
@@ -486,13 +478,12 @@
       if (mode === 'staff') {
         patientCol.classList.add('hidden');
         staffCol.classList.remove('hidden');
-        staffCol.className = "lg:col-span-12 flex flex-col space-y-4";
-        appGrid.className = "max-w-7xl mx-auto";
+        appWrapper.className = "w-full flex justify-center";
         document.getElementById("nav-btn-staff").classList.add('bg-blue-600', 'text-white');
       } else {
         patientCol.classList.remove('hidden');
         staffCol.classList.add('hidden');
-        appGrid.className = "max-w-md mx-auto";
+        appWrapper.className = "w-full flex justify-center";
         document.getElementById("nav-btn-patient").classList.add('bg-blue-600', 'text-white');
       }
     }
@@ -509,23 +500,18 @@
       }, 4000);
     }
 
-    // Sort queue logic: Scheduled appointments with times come first chronologically, followed by walk-ins
+    // Sort queue logic: Scheduled appointments (10m slots) come first chronologically, followed by walk-ins
     function sortAndAssignTokens() {
-      // Separate active vs completed/cancelled
       let active = queueList.filter(q => q.status !== "Visit Complete" && q.status !== "Cancelled");
       let finished = queueList.filter(q => q.status === "Visit Complete" || q.status === "Cancelled");
 
-      // Sort active queue: 
-      // 1. Those with apptTime sorted by time string
-      // 2. Walk-ins (no apptTime)
       active.sort((a, b) => {
         if (a.apptTime && b.apptTime) return a.apptTime.localeCompare(b.apptTime);
         if (a.apptTime && !b.apptTime) return -1;
         if (!a.apptTime && b.apptTime) return 1;
-        return 0; // maintain relative priority if both walk-ins or both timed
+        return 0;
       });
 
-      // Re-assign sequential token numbers starting from 101 based on sorted order
       active.forEach((pat, idx) => {
         pat.token = 101 + idx;
       });
@@ -553,7 +539,7 @@
       const defaultFee = 500;
 
       const newPatient = {
-        token: 0, // will be computed in sort
+        token: 0,
         name: name,
         phone: phone,
         doctor: doctor,
@@ -572,7 +558,7 @@
       renderPatientTicket(created);
       renderStaffDashboard();
 
-      let msg = apptTime ? `Appointment booked successfully for ${apptTime}! SMS sent to +91 ${phone}` : `Walk-in token registered! SMS sent to +91 ${phone}`;
+      let msg = apptTime ? `10m Appointment booked for ${apptTime}! SMS sent to +91 ${phone}` : `Walk-in token registered! SMS sent to +91 ${phone}`;
       showToast(msg);
 
       document.getElementById("patient-screen-form").classList.add("hidden");
@@ -586,12 +572,11 @@
       
       const timeElem = document.getElementById("ticket-appt-time");
       if (patient.apptTime) {
-        timeElem.innerText = `Scheduled Appt Time: ${patient.apptTime}`;
+        timeElem.innerText = `Appt Time (10m Slot): ${patient.apptTime}`;
       } else {
         timeElem.innerText = `Walk-In General Queue`;
       }
 
-      // Status Badge Styling
       const statusBadge = document.getElementById("ticket-status-badge");
       statusBadge.innerText = patient.status;
       if (patient.status === "With Doctor") {
@@ -602,7 +587,6 @@
         statusBadge.className = "px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300";
       }
 
-      // Payment Badge Styling
       const payBadge = document.getElementById("ticket-payment-badge");
       if (patient.isPaid) {
         payBadge.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
@@ -617,7 +601,7 @@
       const patient = queueList.find(q => q.token === currentActiveToken);
       if (!patient) return;
       const pageUrl = window.location.origin + window.location.pathname + `?view=patient&token=${patient.token}`;
-      const waMsg = `🏥 *Sky Multispecialty Hospital*\nYour Token: #${patient.token}\nAppt Time: ${patient.apptTime || 'Walk-In'}\nTap to check live wait time:\n${pageUrl}`;
+      const waMsg = `🏥 *Sky Hospital*\nYour Token: #${patient.token}\nAppt Time: ${patient.apptTime || 'Walk-In'}\nTap to check live wait time:\n${pageUrl}`;
       
       navigator.clipboard.writeText(waMsg).then(() => {
         showToast("Token link copied! Opening WhatsApp chat...");
@@ -628,8 +612,8 @@
     }
 
     function renderStaffDashboard() {
-      const tbody = document.getElementById("staff-queue-tbody");
-      tbody.innerHTML = "";
+      const container = document.getElementById("staff-queue-cards");
+      container.innerHTML = "";
 
       const activePatients = queueList.filter(q => q.status !== "Visit Complete" && q.status !== "Cancelled");
       document.getElementById("queue-count-badge").innerText = `${activePatients.length} Active`;
@@ -637,9 +621,37 @@
       queueList.forEach((patient, index) => {
         if (patient.status === "Cancelled") return;
 
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-100";
-        
+        const card = document.createElement("div");
+        card.className = "draggable-row bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs relative group";
+        card.setAttribute("draggable", "true");
+        card.dataset.index = index;
+
+        // Drag and Drop event listeners
+        card.addEventListener("dragstart", (e) => {
+          draggedIndex = index;
+          e.dataTransfer.effectAllowed = "move";
+          card.classList.add("opacity-50");
+        });
+        card.addEventListener("dragend", () => {
+          card.classList.remove("opacity-50");
+          document.querySelectorAll('.draggable-row').forEach(c => c.classList.remove('drag-over'));
+        });
+        card.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          card.classList.add("drag-over");
+        });
+        card.addEventListener("dragleave", () => {
+          card.classList.remove("drag-over");
+        });
+        card.addEventListener("drop", (e) => {
+          e.preventDefault();
+          card.classList.remove("drag-over");
+          if (draggedIndex !== null && draggedIndex !== index) {
+            reorderQueue(draggedIndex, index);
+          }
+        });
+
         let statusBadgeClass = "";
         if (patient.status === 'Waiting to see Doctor') statusBadgeClass = "bg-amber-100 text-amber-800 border-amber-300";
         else if (patient.status === 'With Doctor') statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
@@ -647,70 +659,54 @@
 
         let paymentDropdownClass = patient.isPaid ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold" : "bg-rose-100 text-rose-800 border-rose-300 font-bold";
 
-        tr.innerHTML = `
-          <td class="p-3">
-            <div class="font-bold text-blue-700 text-sm">#${patient.token}</div>
-            <div class="flex gap-1 mt-1">
-              <button onclick="movePriority(${index}, -1)" title="Move Up Priority" class="px-1.5 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-[10px]"><i class="fa-solid fa-arrow-up"></i></button>
-              <button onclick="movePriority(${index}, 1)" title="Move Down Priority" class="px-1.5 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-[10px]"><i class="fa-solid fa-arrow-down"></i></button>
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-slate-100 pb-1.5">
+            <div class="flex items-center gap-1.5">
+              <i class="fa-solid fa-grip-vertical text-slate-400 cursor-grab"></i>
+              <span class="font-black text-blue-700 text-sm">#${patient.token}</span>
+              <span class="font-bold text-slate-800">${patient.name}</span>
             </div>
-          </td>
-          <td class="p-3">
-            <div class="font-medium text-slate-800">${patient.name}</div>
-            <div class="text-[10px] text-slate-400">+91 ${patient.phone}</div>
-          </td>
-          <td class="p-3 text-slate-600">${patient.doctor}</td>
-          <td class="p-3 font-semibold text-blue-600">${patient.apptTime ? '<i class="fa-solid fa-clock mr-1"></i>' + patient.apptTime : '<span class="text-slate-400">Walk-In</span>'}</td>
-          
-          <!-- STATUS SELECTOR -->
-          <td class="p-3">
-            <select onchange="updatePatientStatus(${patient.token}, this.value)" class="text-[11px] font-bold p-1.5 rounded-lg border shadow-sm outline-none ${statusBadgeClass}">
-              <option value="Waiting to see Doctor" ${patient.status === 'Waiting to see Doctor' ? 'selected' : ''}>⏳ Waiting to see Doctor</option>
+            <button onclick="cancelPatientByStaff(${patient.token})" class="text-rose-500 hover:text-rose-700 p-1" title="Cancel Token"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600">
+            <div><strong>Doctor:</strong> ${patient.doctor}</div>
+            <div><strong>Appt:</strong> ${patient.apptTime ? '<i class="fa-solid fa-clock text-blue-500"></i> ' + patient.apptTime + ' (10m)' : 'Walk-In'}</div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1 gap-2">
+            <select onchange="updatePatientStatus(${patient.token}, this.value)" class="text-[10px] font-bold p-1 rounded border shadow-sm outline-none ${statusBadgeClass}">
+              <option value="Waiting to see Doctor" ${patient.status === 'Waiting to see Doctor' ? 'selected' : ''}>⏳ Waiting</option>
               <option value="With Doctor" ${patient.status === 'With Doctor' ? 'selected' : ''}>🟢 With Doctor</option>
-              <option value="Visit Complete" ${patient.status === 'Visit Complete' ? 'selected' : ''}>🏁 Visit Complete</option>
+              <option value="Visit Complete" ${patient.status === 'Visit Complete' ? 'selected' : ''}>🏁 Complete</option>
               <option value="Cancelled" ${patient.status === 'Cancelled' ? 'selected' : ''}>❌ Cancelled</option>
             </select>
-          </td>
 
-          <!-- EDITABLE FEE & PAYMENT STATUS -->
-          <td class="p-3">
-            <div class="flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-lg border border-slate-200 w-fit">
-              <span class="text-slate-400 font-semibold">₹</span>
-              <input type="number" value="${patient.paymentAmount}" min="0" step="50" onchange="updatePatientFee(${patient.token}, this.value)" class="w-16 text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-blue-500">
-              <select onchange="updatePaymentStatus(${patient.token}, this.value)" class="text-[11px] p-1 rounded border shadow-sm outline-none ${paymentDropdownClass}">
+            <div class="flex items-center gap-1 bg-slate-50 p-1 rounded border border-slate-200">
+              <span class="text-slate-400">₹</span>
+              <input type="number" value="${patient.paymentAmount}" min="0" step="50" onchange="updatePatientFee(${patient.token}, this.value)" class="w-12 text-[11px] font-bold text-slate-800 bg-white border border-slate-300 rounded px-1 outline-none">
+              <select onchange="updatePaymentStatus(${patient.token}, this.value)" class="text-[10px] p-0.5 rounded border outline-none ${paymentDropdownClass}">
                 <option value="due" ${!patient.isPaid ? 'selected' : ''}>Due</option>
                 <option value="paid" ${patient.isPaid ? 'selected' : ''}>Paid</option>
               </select>
             </div>
-          </td>
-
-          <td class="p-3 text-right">
-            <button onclick="cancelPatientByStaff(${patient.token})" class="px-2 py-1 bg-slate-100 hover:bg-rose-100 text-rose-600 rounded text-xs transition-colors" title="Cancel Patient Token">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </td>
+          </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(card);
       });
     }
 
-    // Move priority up or down in the array manually
-    function movePriority(index, direction) {
+    function reorderQueue(fromIdx, toIdx) {
       let active = queueList.filter(q => q.status !== "Visit Complete" && q.status !== "Cancelled");
       let finished = queueList.filter(q => q.status === "Visit Complete" || q.status === "Cancelled");
 
-      const targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= active.length) return;
-
-      // Swap elements in active array
-      let temp = active[index];
-      active[index] = active[targetIndex];
-      active[targetIndex] = temp;
+      const [movedItem] = active.splice(fromIdx, 1);
+      active.splice(toIdx, 0, movedItem);
 
       queueList = [...active, ...finished];
-      sortAndAssignTokens(); // re-evaluates tokens based on manual priority shift
+      sortAndAssignTokens(); // re-evaluates tokens based on manual drag priority
       renderStaffDashboard();
-      showToast("Queue priority reordered & token numbers adjusted.");
+      showToast("Queue priority reordered via drag & drop! Token numbers updated.");
     }
 
     function updatePatientStatus(token, newStatus) {
@@ -787,8 +783,9 @@
       document.getElementById("modal-schedule").classList.remove("flex");
     }
     function saveSchedule() {
+      const doc = document.getElementById("sched-doctor").value;
       closeScheduleModal();
-      showToast("7-day doctor availability roster successfully updated!");
+      showToast(`Schedule successfully added for ${doc} (10m slot allocation active)!`);
     }
 
     function openEmergencyModal() {
@@ -804,8 +801,8 @@
       const duration = document.getElementById("emergency-duration").value;
       closeEmergencyModal();
       
-      let delayText = duration === 'full' ? 'cancelled for the day due to emergency operation' : `delayed by ${duration} mins due to emergency operation`;
-      showToast(`Emergency Alert: ${doc} schedule updated (${delayText}). SMS notifications sent to affected patients.`, 'rose');
+      let delayText = duration === 'full' ? 'marked unavailable for the day due to emergency operation' : `delayed by ${duration} mins due to emergency operation`;
+      showToast(`Emergency Alert: ${doc} status updated (${delayText}). Notifications sent to waiting patients.`, 'rose');
     }
 
     function handleStaffManualSubmit(e) {
@@ -832,7 +829,7 @@
       renderStaffDashboard();
       closeManualAddModal();
 
-      let msg = apptTime ? `Appointment confirmed for ${name} at ${apptTime}. SMS sent to +91 ${phone}` : `Patient ${name} added to queue. SMS sent to +91 ${phone}`;
+      let msg = apptTime ? `10m Appointment booked for ${name} at ${apptTime}. SMS sent to +91 ${phone}` : `Patient ${name} added to queue. SMS sent to +91 ${phone}`;
       showToast(msg);
     }
 
