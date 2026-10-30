@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sky Multispecialty Hospital - Queue Manager</title>
+  <title>Sky Multispecialty Hospital - Digital OPD Queue</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -42,25 +42,37 @@
   <!-- NOTIFICATION TOAST CONTAINER -->
   <div id="toast-container" class="fixed top-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
-  <!-- TOP DEPLOYMENT NAVIGATION BAR -->
+  <!-- TOP DEPLOYMENT NAVIGATION BAR & LANGUAGE SELECTOR -->
   <header class="bg-slate-900 text-white px-4 py-3 shadow-md border-b border-slate-800">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-2">
         <div class="bg-blue-600 text-white p-2 rounded-lg font-bold">🏥 Sky</div>
         <div>
-          <h1 class="font-bold text-sm sm:text-base leading-tight">Sky Multispecialty Hospital</h1>
-          <p class="text-xs text-slate-400">Queue, Schedule & Analytics Platform</p>
+          <h1 class="font-bold text-sm sm:text-base leading-tight" id="lbl-hospital-title">Sky Multispecialty Hospital</h1>
+          <p class="text-xs text-slate-400" id="lbl-hospital-subtitle">Queue, QR Billing & Analytics Platform</p>
         </div>
       </div>
       
-      <!-- Main View Switcher -->
-      <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs sm:text-sm">
-        <button id="nav-btn-patient" onclick="setMainView('patient')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white">
-          <i class="fa-solid fa-mobile-screen mr-1.5"></i> Patient View
-        </button>
-        <button id="nav-btn-staff" onclick="setMainView('staff')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
-          <i class="fa-solid fa-desktop mr-1.5"></i> Receptionist Desk
-        </button>
+      <div class="flex items-center gap-2">
+        <!-- LANGUAGE SELECTOR -->
+        <div class="flex items-center bg-slate-800 px-2 py-1 rounded-lg border border-slate-700 text-xs">
+          <i class="fa-solid fa-language text-blue-400 mr-1.5"></i>
+          <select id="lang-selector" onchange="changeLanguage(this.value)" class="bg-transparent text-white font-bold outline-none cursor-pointer">
+            <option value="en" class="bg-slate-800 text-white">English</option>
+            <option value="hi" class="bg-slate-800 text-white">हिन्दी (Hindi)</option>
+            <option value="mr" class="bg-slate-800 text-white">मराठी (Marathi)</option>
+          </select>
+        </div>
+
+        <!-- Main View Switcher -->
+        <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs sm:text-sm">
+          <button id="nav-btn-patient" onclick="setMainView('patient')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white">
+            <i class="fa-solid fa-mobile-screen mr-1.5"></i> <span id="lbl-btn-patient-view">Patient View</span>
+          </button>
+          <button id="nav-btn-staff" onclick="setMainView('staff')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
+            <i class="fa-solid fa-desktop mr-1.5"></i> <span id="lbl-btn-staff-view">Receptionist Desk</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
@@ -82,11 +94,11 @@
                 <i class="fa-solid fa-hospital text-xl"></i>
                 <div>
                   <h2 class="font-bold text-sm leading-tight">Sky Hospital</h2>
-                  <p class="text-[10px] text-blue-200">Digital Token & Queue Tracker</p>
+                  <p class="text-[10px] text-blue-200" id="lbl-p-header-sub">Digital Token & QR Payment</p>
                 </div>
               </div>
               <button onclick="resetPatientScanner()" title="Scan Again" class="text-xs bg-blue-800 hover:bg-blue-900 text-white px-2 py-1 rounded border border-blue-600 flex items-center gap-1">
-                <i class="fa-solid fa-qrcode"></i> Reset
+                <i class="fa-solid fa-qrcode"></i> <span id="lbl-reset">Reset</span>
               </button>
             </div>
 
@@ -94,8 +106,8 @@
               <!-- SCREEN 0: SCAN QR CODE -->
               <div id="patient-screen-scan" class="flex flex-col items-center justify-center h-full text-center py-6">
                 <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 w-full">
-                  <h3 class="font-bold text-slate-800 text-base mb-1">Welcome to Sky Hospital</h3>
-                  <p class="text-xs text-slate-600">Scan hospital front desk QR code to join today's OPD Queue</p>
+                  <h3 class="font-bold text-slate-800 text-base mb-1" id="lbl-welcome-title">Welcome to Sky Hospital</h3>
+                  <p class="text-xs text-slate-600" id="lbl-welcome-sub">Scan hospital front desk QR code to join today's OPD Queue</p>
                 </div>
 
                 <div onclick="simulateQRScan()" class="cursor-pointer relative w-56 h-56 bg-slate-900 rounded-2xl border-4 border-blue-500 overflow-hidden shadow-lg flex items-center justify-center my-2 group">
@@ -104,30 +116,30 @@
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https://skyhospital.com/queue" alt="Hospital QR Code" class="w-32 h-32 object-contain">
                   </div>
                   <div class="absolute bottom-2 left-0 right-0 text-center">
-                    <span class="bg-black/70 text-white text-[10px] px-2.5 py-1 rounded-full backdrop-blur-sm">Tap frame to scan QR</span>
+                    <span class="bg-black/70 text-white text-[10px] px-2.5 py-1 rounded-full backdrop-blur-sm" id="lbl-tap-scan">Tap frame to scan QR</span>
                   </div>
                 </div>
 
                 <button onclick="simulateQRScan()" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-                  <i class="fa-solid fa-camera"></i> Scan QR Code
+                  <i class="fa-solid fa-camera"></i> <span id="lbl-btn-scan">Scan QR Code</span>
                 </button>
               </div>
 
               <!-- SCREEN 1: REGISTRATION FORM -->
               <div id="patient-screen-form" class="hidden space-y-3">
                 <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
-                  <p class="text-xs text-blue-800 font-semibold">📍 OPD Queue Registration</p>
-                  <p class="text-[11px] text-blue-600">Fill details or book a 10-minute time slot</p>
+                  <p class="text-xs text-blue-800 font-semibold" id="lbl-reg-heading">📍 OPD Queue Registration</p>
+                  <p class="text-[11px] text-blue-600" id="lbl-reg-sub">Fill details or book a 10-minute time slot</p>
                 </div>
 
                 <form id="patient-reg-form" onsubmit="handlePatientSubmit(event)" class="space-y-3 text-left">
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Full Name *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1" id="lbl-p-fullname">Full Name *</label>
                     <input type="text" id="p-name" required placeholder="e.g. Rajesh Kumar" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
                   </div>
 
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Mobile Number *</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1" id="lbl-p-phone">Mobile Number (For SMS updates) *</label>
                     <div class="flex gap-1.5">
                       <span class="bg-slate-200 text-slate-700 text-xs font-bold px-2.5 py-2.5 rounded-lg border border-slate-300 flex items-center">+91</span>
                       <input type="tel" id="p-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none">
@@ -136,7 +148,7 @@
 
                   <div class="grid grid-cols-2 gap-2">
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1">Gender *</label>
+                      <label class="block text-xs font-bold text-slate-700 mb-1" id="lbl-p-gender">Gender *</label>
                       <select id="p-gender" required class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -144,13 +156,13 @@
                       </select>
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-slate-700 mb-1">Appt Time (10m)</label>
+                      <label class="block text-xs font-bold text-slate-700 mb-1" id="lbl-p-appt">Appt Time (10m)</label>
                       <input type="time" id="p-time" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
                     </div>
                   </div>
 
                   <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Doctor</label>
+                    <label class="block text-xs font-bold text-slate-700 mb-1" id="lbl-p-doc">Select Doctor</label>
                     <select id="p-doctor" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white">
                       <option value="Any Doctor">General Queue (Any Doctor)</option>
                       <option value="Dr. Patel">Dr. Patel (General Physician)</option>
@@ -160,20 +172,20 @@
                   </div>
 
                   <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 mt-2">
-                    <i class="fa-solid fa-ticket"></i> Join Queue & Get Token
+                    <i class="fa-solid fa-ticket"></i> <span id="lbl-btn-get-token">Join Queue & Get Token</span>
                   </button>
                 </form>
               </div>
 
-              <!-- SCREEN 2: LIVE TICKET TRACKER -->
+              <!-- SCREEN 2: LIVE TICKET & QR PAYMENT TRACKER -->
               <div id="patient-screen-ticket" class="hidden space-y-3">
                 <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-center">
-                  <span class="text-[10px] uppercase font-extrabold text-emerald-700 tracking-wider">OPD Registration Successful</span>
+                  <span class="text-[10px] uppercase font-extrabold text-emerald-700 tracking-wider" id="lbl-reg-success">OPD Registration Successful</span>
                   <h3 id="ticket-patient-name" class="font-bold text-slate-800 text-sm">Patient Name</h3>
                 </div>
 
                 <div class="bg-gradient-to-br from-blue-900 to-slate-900 text-white p-4 rounded-2xl text-center shadow-lg relative overflow-hidden">
-                  <p class="text-[11px] text-blue-300 font-medium">YOUR TOKEN NUMBER</p>
+                  <p class="text-[11px] text-blue-300 font-medium" id="lbl-your-token">YOUR TOKEN NUMBER</p>
                   <div id="ticket-number" class="text-4xl font-black my-1 text-cyan-300 tracking-tight">1</div>
                   <p id="ticket-doctor-assigned" class="text-xs text-slate-300">Doctor: Any Available</p>
                   <p id="ticket-appt-time" class="text-[11px] text-amber-300 mt-1 font-semibold">Walk-In Queue</p>
@@ -181,31 +193,47 @@
 
                 <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-2 text-xs">
                   <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <span class="text-slate-500 font-medium">Queue Status:</span>
+                    <span class="text-slate-500 font-medium" id="lbl-status-title">Queue Status:</span>
                     <span id="ticket-status-badge" class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
                       Waiting to see Doctor
                     </span>
                   </div>
 
                   <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <span class="text-slate-500 font-medium">OPD Consultation Fee:</span>
+                    <span class="text-slate-500 font-medium" id="lbl-fee-title">OPD Consultation Fee:</span>
                     <span id="ticket-payment-badge" class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
                       ₹500 Due (Unpaid)
                     </span>
                   </div>
 
                   <div class="flex justify-between items-center">
-                    <span class="text-slate-500">Est. Waiting Time:</span>
+                    <span class="text-slate-500" id="lbl-wait-title">Est. Waiting Time:</span>
                     <span id="ticket-wait-time" class="font-bold text-blue-600">~10 mins</span>
                   </div>
                 </div>
 
+                <!-- PATIENT QR CODE PAYMENT BOX -->
+                <div id="patient-qr-pay-box" class="bg-slate-900 text-white rounded-xl p-3 text-center space-y-2">
+                  <p class="text-[11px] font-bold text-cyan-300" id="lbl-qr-title">Pay OPD Fee by Doctor UPI QR Code</p>
+                  <p id="patient-paying-doc-name" class="text-xs font-semibold text-slate-200">You are paying to Dr. Patel</p>
+                  
+                  <div class="p-2 bg-white rounded-lg inline-block my-1 border border-slate-300 shadow-inner">
+                    <img id="patient-doc-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa=dr.patel@upi&pn=DrPatel&am=500" alt="Doctor QR Code" class="w-28 h-28 object-contain">
+                  </div>
+                  
+                  <p id="patient-doc-upi-id" class="text-[10px] text-slate-400">UPI ID: dr.patel@skyhospital</p>
+                  
+                  <button onclick="simulatePatientQRPayment()" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 text-xs font-bold py-2 rounded-lg shadow transition-all">
+                    <i class="fa-solid fa-check-circle mr-1"></i> <span id="lbl-btn-sim-pay">I Have Paid via QR Code</span>
+                  </button>
+                </div>
+
                 <button onclick="saveTokenToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition-all flex items-center justify-center gap-2">
-                  <i class="fa-brands fa-whatsapp text-sm"></i> Save Token to My WhatsApp
+                  <i class="fa-brands fa-whatsapp text-sm"></i> <span id="lbl-btn-wa">Save Token to My WhatsApp</span>
                 </button>
 
                 <button onclick="cancelMyToken()" class="w-full bg-slate-100 hover:bg-rose-50 text-rose-600 font-semibold py-2 rounded-lg text-xs border border-slate-200 transition-colors">
-                  <i class="fa-solid fa-xmark mr-1"></i> Cancel Token
+                  <i class="fa-solid fa-xmark mr-1"></i> <span id="lbl-btn-cancel-token">Cancel Token</span>
                 </button>
               </div>
             </div>
@@ -217,22 +245,21 @@
         </div>
       </section>
 
-      <!-- ================= RECEPTIONIST DESK (DIRECT PHONE-RESPONSIVE EXPERIENCE) ================= -->
+      <!-- ================= RECEPTIONIST DESK (RESPONSIVE VIEW) ================= -->
       <section id="staff-container" class="hidden w-full max-w-3xl flex flex-col space-y-4">
         
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 class="text-base sm:text-lg font-bold text-slate-800">Receptionist Console</h2>
-            <p class="text-xs text-slate-500">Queue Management & Hospital Analytics Dashboard</p>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800" id="lbl-staff-heading">Receptionist Console</h2>
+            <p class="text-xs text-slate-500" id="lbl-staff-sub">Queue Management, Doctor QR setup & Hospital Analytics</p>
           </div>
           
-          <!-- Sub-tabs for Staff (Queue vs Analytics) -->
           <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
             <button id="staff-tab-queue" onclick="setStaffTab('queue')" class="px-3 py-1.5 rounded-lg font-bold transition-all bg-blue-600 text-white shadow-sm">
-              <i class="fa-solid fa-list-check mr-1"></i> Live Queue
+              <i class="fa-solid fa-list-check mr-1"></i> <span id="lbl-tab-queue">Live Queue</span>
             </button>
             <button id="staff-tab-analytics" onclick="setStaffTab('analytics')" class="px-3 py-1.5 rounded-lg font-bold transition-all text-slate-600 hover:text-slate-900">
-              <i class="fa-solid fa-chart-pie mr-1"></i> Analytics
+              <i class="fa-solid fa-chart-pie mr-1"></i> <span id="lbl-tab-analytics">Analytics</span>
             </button>
           </div>
         </div>
@@ -241,25 +268,28 @@
         <div id="staff-pane-queue" class="space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
             <div class="flex items-center gap-2">
-              <span class="font-bold text-xs text-slate-800 uppercase tracking-wider">OPD Queue</span>
+              <span class="font-bold text-xs text-slate-800 uppercase tracking-wider" id="lbl-opd-queue-hdr">OPD Queue</span>
               <span id="queue-count-badge" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">4 Active</span>
             </div>
             <div class="flex flex-wrap gap-1.5 text-xs">
+              <button onclick="openDoctorQRManageModal()" class="bg-cyan-700 hover:bg-cyan-800 text-white px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1">
+                <i class="fa-solid fa-qrcode"></i> <span id="lbl-btn-doc-qr">Doctor QRs</span>
+              </button>
               <button onclick="openScheduleModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1">
-                <i class="fa-solid fa-calendar-days"></i> Add Schedule
+                <i class="fa-solid fa-calendar-days"></i> <span id="lbl-btn-sched">Add Schedule</span>
               </button>
               <button onclick="openEmergencyModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1">
-                <i class="fa-solid fa-triangle-exclamation"></i> Emergency
+                <i class="fa-solid fa-triangle-exclamation"></i> <span id="lbl-btn-emerg">Emergency</span>
               </button>
               <button onclick="openManualAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1">
-                <i class="fa-solid fa-plus"></i> Add Patient
+                <i class="fa-solid fa-plus"></i> <span id="lbl-btn-addp">Add Patient</span>
               </button>
               <button onclick="openQRModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-2.5 py-1.5 rounded-lg font-bold transition-all">
-                <i class="fa-solid fa-qrcode"></i> QR
+                <i class="fa-solid fa-hospital"></i> QR Poster
               </button>
             </div>
           </div>
-          <p class="text-[11px] text-slate-500 italic px-1">💡 Tip: Drag & drop patient cards up or down to reorder priority. Token numbers will automatically adjust.</p>
+          <p class="text-[11px] text-slate-500 italic px-1" id="lbl-drag-tip">💡 Tip: Drag & drop patient cards up or down to reorder priority. Token numbers automatically adjust.</p>
 
           <!-- DRAGGABLE QUEUE CARDS CONTAINER -->
           <div id="staff-queue-cards" class="space-y-2.5">
@@ -272,7 +302,7 @@
           
           <!-- Period Switcher -->
           <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-            <span class="text-xs font-bold text-slate-700">Performance Metrics & Trends</span>
+            <span class="text-xs font-bold text-slate-700" id="lbl-analytics-perf">Performance Metrics & Trends</span>
             <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
               <button onclick="setAnalyticsPeriod('day')" id="period-btn-day" class="px-3 py-1 rounded-lg bg-blue-600 text-white shadow-sm transition-all">Day</button>
               <button onclick="setAnalyticsPeriod('week')" id="period-btn-week" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition-all">Week</button>
@@ -283,17 +313,17 @@
           <!-- KPI CARDS -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <p class="text-[11px] font-bold text-slate-400 uppercase">Patients Seen</p>
+              <p class="text-[11px] font-bold text-slate-400 uppercase" id="lbl-kpi-seen-title">Patients Seen</p>
               <h3 id="kpi-patients-seen" class="text-2xl font-black text-slate-800 mt-1">42</h3>
               <p class="text-[10px] text-emerald-600 font-semibold mt-1"><i class="fa-solid fa-arrow-up"></i> +12% vs last period</p>
             </div>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <p class="text-[11px] font-bold text-slate-400 uppercase">Total Collection</p>
+              <p class="text-[11px] font-bold text-slate-400 uppercase" id="lbl-kpi-tot-title">Total Collection</p>
               <h3 id="kpi-total-collection" class="text-2xl font-black text-emerald-600 mt-1">₹21,000</h3>
               <p class="text-[10px] text-slate-500 mt-1">UPI: ₹14,000 | Cash: ₹7,000</p>
             </div>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-              <p class="text-[11px] font-bold text-slate-400 uppercase">Monthly Trend</p>
+              <p class="text-[11px] font-bold text-slate-400 uppercase" id="lbl-kpi-trend-title">Monthly Trend</p>
               <h3 class="text-2xl font-black text-blue-600 mt-1">1,280 Visits</h3>
               <p class="text-[10px] text-emerald-600 font-semibold mt-1"><i class="fa-solid fa-chart-line"></i> Steady growth</p>
             </div>
@@ -302,9 +332,8 @@
           <!-- DOCTOR BREAKDOWN CHARTS (KPI STYLE BARS) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             
-            <!-- Patients by Doctor Bar Chart -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-              <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Patients Seen by Doctor</h4>
+              <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider" id="lbl-chart-pat-title">Patients Seen by Doctor</h4>
               
               <div class="space-y-2.5 text-xs">
                 <div>
@@ -339,9 +368,8 @@
               </div>
             </div>
 
-            <!-- Collections by Doctor Bar Chart -->
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-              <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Collections by Doctor (₹)</h4>
+              <h4 class="font-bold text-xs text-slate-800 uppercase tracking-wider" id="lbl-chart-rev-title">Collections by Doctor (₹)</h4>
               
               <div class="space-y-2.5 text-xs">
                 <div>
@@ -399,7 +427,7 @@
           <input type="text" id="m-name" required placeholder="Full Name" class="w-full p-2.5 rounded-lg border border-slate-300">
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Mobile Number *</label>
+          <label class="block font-bold text-slate-700 mb-1">Mobile Number (SMS Notification) *</label>
           <input type="tel" id="m-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full p-2.5 rounded-lg border border-slate-300">
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -433,13 +461,55 @@
         </div>
         <div class="pt-2 flex justify-end gap-2">
           <button type="button" onclick="closeManualAddModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-          <button type="submit" class="px-4 py-2 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Book & Notify</button>
+          <button type="submit" class="px-4 py-2 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Book & Send SMS</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- ADD DOCTOR SCHEDULE MODAL (MORNING & EVENING OPD SHIFTS) -->
+  <!-- MANAGE DOCTOR UPI QR CODES MODAL -->
+  <div id="modal-manage-doc-qr" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-3 text-xs">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-base text-slate-800">Maintain Doctor UPI QR Codes</h3>
+        <button onclick="closeDoctorQRManageModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <p class="text-slate-500">Assign unique UPI IDs to doctors so patients pay directly to the doctor's QR code.</p>
+      
+      <div class="space-y-3 pt-1">
+        <div class="p-2.5 bg-slate-50 border rounded-xl flex items-center justify-between">
+          <div>
+            <p class="font-bold text-slate-800">Dr. Patel (Gen Physician)</p>
+            <p class="text-[10px] text-slate-500">Current UPI: dr.patel@skyhospital</p>
+          </div>
+          <input type="text" id="upi-dr-patel" value="dr.patel@skyhospital" class="p-1.5 border rounded text-[11px] w-36 font-semibold">
+        </div>
+
+        <div class="p-2.5 bg-slate-50 border rounded-xl flex items-center justify-between">
+          <div>
+            <p class="font-bold text-slate-800">Dr. Sonone (Pediatrics)</p>
+            <p class="text-[10px] text-slate-500">Current UPI: dr.sonone@skyhospital</p>
+          </div>
+          <input type="text" id="upi-dr-sonone" value="dr.sonone@skyhospital" class="p-1.5 border rounded text-[11px] w-36 font-semibold">
+        </div>
+
+        <div class="p-2.5 bg-slate-50 border rounded-xl flex items-center justify-between">
+          <div>
+            <p class="font-bold text-slate-800">Dr. Rathi (Orthopedics)</p>
+            <p class="text-[10px] text-slate-500">Current UPI: dr.rathi@skyhospital</p>
+          </div>
+          <input type="text" id="upi-dr-rathi" value="dr.rathi@skyhospital" class="p-1.5 border rounded text-[11px] w-36 font-semibold">
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 gap-2">
+        <button type="button" onclick="closeDoctorQRManageModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="saveDoctorQRs()" class="bg-cyan-700 hover:bg-cyan-800 text-white font-bold px-4 py-2 rounded-lg">Save Doctor QR Codes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD DOCTOR SCHEDULE MODAL -->
   <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-3 text-xs">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
@@ -490,7 +560,7 @@
         <h3 class="font-bold text-base text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency OPD Delay Block</h3>
         <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <p class="text-slate-600">Select doctor called for emergency operation to adjust wait times and notify patients.</p>
+      <p class="text-slate-600">Select doctor called for emergency operation to adjust wait times and broadcast SMS alerts.</p>
       
       <div>
         <label class="block font-bold text-slate-700 mb-1">Select Doctor</label>
@@ -515,7 +585,7 @@
 
       <div class="pt-2 flex justify-end gap-2">
         <button type="button" onclick="closeEmergencyModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-        <button onclick="triggerEmergencyBlock()" class="px-4 py-2 font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow">Apply & Notify</button>
+        <button onclick="triggerEmergencyBlock()" class="px-4 py-2 font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow">Apply & Broadcast SMS</button>
       </div>
     </div>
   </div>
@@ -538,10 +608,19 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT APP LOGIC -->
+  <!-- JAVASCRIPT APP LOGIC & TRANSLATIONS -->
   <script>
+    let currentLang = 'en';
     let currentActiveToken = null;
     let draggedIndex = null;
+
+    // Doctor UPI mapping
+    let doctorUPIs = {
+      "Dr. Patel": "dr.patel@skyhospital",
+      "Dr. Sonone": "dr.sonone@skyhospital",
+      "Dr. Rathi": "dr.rathi@skyhospital",
+      "Any Doctor": "billing@skyhospital"
+    };
 
     let queueList = [
       { token: 1, name: "Amit Sharma", phone: "9823011223", doctor: "Dr. Patel", apptTime: "09:30", status: "With Doctor", paymentAmount: 500, paymentStatus: "paid_upi" },
@@ -549,6 +628,200 @@
       { token: 3, name: "Rahul Verma", phone: "9988776655", doctor: "Dr. Rathi", apptTime: "", status: "Waiting to see Doctor", paymentAmount: 500, paymentStatus: "due" },
       { token: 4, name: "Sneha Kulkarni", phone: "9811223344", doctor: "Dr. Patel", apptTime: "10:00", status: "Waiting to see Doctor", paymentAmount: 500, paymentStatus: "paid_cash" }
     ];
+
+    // Language Dictionary (English, Hindi, Marathi)
+    const translations = {
+      en: {
+        hospitalTitle: "Sky Multispecialty Hospital",
+        hospitalSubtitle: "Queue, QR Billing & Analytics Platform",
+        btnPatientView: "Patient View",
+        btnStaffView: "Receptionist Desk",
+        pHeaderSub: "Digital Token & QR Payment",
+        reset: "Reset",
+        welcomeTitle: "Welcome to Sky Hospital",
+        welcomeSub: "Scan hospital front desk QR code to join today's OPD Queue",
+        tapScan: "Tap frame to scan QR",
+        btnScan: "Scan QR Code",
+        regHeading: "📍 OPD Queue Registration",
+        regSub: "Fill details or book a 10-minute time slot",
+        pFullname: "Full Name *",
+        pPhone: "Mobile Number (For SMS updates) *",
+        pGender: "Gender *",
+        pAppt: "Appt Time (10m)",
+        pDoc: "Select Doctor",
+        btnGetToken: "Join Queue & Get Token",
+        regSuccess: "OPD Registration Successful",
+        yourToken: "YOUR TOKEN NUMBER",
+        statusTitle: "Queue Status:",
+        feeTitle: "OPD Consultation Fee:",
+        waitTitle: "Est. Waiting Time:",
+        qrTitle: "Pay OPD Fee by Doctor UPI QR Code",
+        btnSimPay: "I Have Paid via QR Code",
+        btnWa: "Save Token to My WhatsApp",
+        btnCancelToken: "Cancel Token",
+        staffHeading: "Receptionist Console",
+        staffSub: "Queue Management, Doctor QR setup & Hospital Analytics",
+        tabQueue: "Live Queue",
+        tabAnalytics: "Analytics",
+        opdQueueHdr: "OPD Queue",
+        btnDocQr: "Doctor QRs",
+        btnSched: "Add Schedule",
+        btnEmerg: "Emergency",
+        btnAddp: "Add Patient",
+        dragTip: "💡 Tip: Drag & drop patient cards up or down to reorder priority. Token numbers automatically adjust.",
+        analyticsPerf: "Performance Metrics & Trends",
+        kpiSeenTitle: "Patients Seen",
+        kpiTotTitle: "Total Collection",
+        kpiTrendTitle: "Monthly Trend",
+        chartPatTitle: "Patients Seen by Doctor",
+        chartRevTitle: "Collections by Doctor (₹)"
+      },
+      hi: {
+        hospitalTitle: "स्काय मल्टीस्पेशालिटी हॉस्पिटल",
+        hospitalSubtitle: "टोकन, क्यूआर पेमेंट और एनालिटिक्स",
+        btnPatientView: "मरीज़ ऐप",
+        btnStaffView: "रिसेप्शनिस्ट डेस्क",
+        pHeaderSub: "डिजिटल टोकन और क्यूआर भुगतान",
+        reset: "रीसेट",
+        welcomeTitle: "स्काय हॉस्पिटल में आपका स्वागत है",
+        welcomeSub: "ओपीडी कतार में शामिल होने के लिए क्यूआर कोड स्कैन करें",
+        tapScan: "स्कैन करने के लिए टैप करें",
+        btnScan: "क्यूआर कोड स्कैन करें",
+        regHeading: "📍 ओपीडी पंजीकरण",
+        regSub: "विवरण भरें या 10 मिनट का समय बुक करें",
+        pFullname: "पूरा नाम *",
+        pPhone: "मोबाइल नंबर (एसएमएस अलर्ट के लिए) *",
+        pGender: "लिंग *",
+        pAppt: "समय (10 मिनट स्लॉट)",
+        pDoc: "डॉक्टर चुनें",
+        btnGetToken: "कतार में जुड़ें और टोकन पाएं",
+        regSuccess: "ओपीडी पंजीकरण सफल",
+        yourToken: "आपका टोकन नंबर",
+        statusTitle: "कतार स्थिति:",
+        feeTitle: "ओपीडी परामर्श शुल्क:",
+        waitTitle: "अनुमानित प्रतीक्षा समय:",
+        qrTitle: "डॉक्टर के क्यूआर कोड द्वारा शुल्क का भुगतान करें",
+        btnSimPay: "मैंने क्यूआर कोड द्वारा भुगतान कर दिया है",
+        btnWa: "व्हाट्सएप पर टोकन सेव करें",
+        btnCancelToken: "टोकन रद्द करें",
+        staffHeading: "रिसेप्शनिस्ट कंसोल",
+        staffSub: "कतार प्रबंधन, डॉक्टर क्यूआर और एनालिटिक्स",
+        tabQueue: "लाइव कतार",
+        tabAnalytics: "एनालिटिक्स",
+        opdQueueHdr: "ओपीडी कतार",
+        btnDocQr: "डॉक्टर क्यूआर",
+        btnSched: "शेड्यूल जोड़ें",
+        btnEmerg: "इमरजेंसी",
+        btnAddp: "मरीज़ जोड़ें",
+        dragTip: "💡 टिप: प्राथमिकता बदलने के लिए कार्ड्स को ऊपर-नीचे ड्रैग करें। टोकन नंबर अपने आप बदल जाएंगे।",
+        analyticsPerf: "प्रदर्शन मेट्रिक्स और रुझान",
+        kpiSeenTitle: "देखे गए मरीज़",
+        kpiTotTitle: "कुल संग्रह",
+        kpiTrendTitle: "मासिक रुझान",
+        chartPatTitle: "डॉक्टर अनुसार देखे गए मरीज़",
+        chartRevTitle: "डॉक्टर अनुसार कुल संग्रह (₹)"
+      },
+      mr: {
+        hospitalTitle: "स्काय मल्टीस्पेशालिटी हॉस्पिटल",
+        hospitalSubtitle: "टोकन, क्यूआर पेमेंट आणि विश्लेषणात्मक माहिती",
+        btnPatientView: "रुग्ण ॲप",
+        btnStaffView: "रिसेप्शनिस्ट डेस्क",
+        pHeaderSub: "डिजिटल टोकन आणि क्यूआर पेमेंट",
+        reset: "रिसेट",
+        welcomeTitle: "स्काय हॉस्पिटलमध्ये आपले स्वागत आहे",
+        welcomeSub: "आजच्या ओपीडी रांगेत सामील होण्यासाठी क्यूआर कोड स्कॅन करा",
+        tapScan: "स्कॅन करण्यासाठी टॅप करा",
+        btnScan: "क्यूआर कोड स्कॅन करा",
+        regHeading: "📍 ओपीडी नोंदणी",
+        regSub: "माहिती भरा किंवा १० मिनिटांची वेळ बुक करा",
+        pFullname: "पूर्ण नाव *",
+        pPhone: "मोबाईल नंबर (एसएमएस अपडेटसाठी) *",
+        pGender: "लिंग *",
+        pAppt: "वेळ (१० मिनिटे स्लॉट)",
+        pDoc: "डॉक्टर निवडा",
+        btnGetToken: "रांगेत सामील व्हा आणि टोकन मिळवा",
+        regSuccess: "ओपीडी नोंदणी यशस्वी झाली",
+        yourToken: "तुमचा टोकन क्रमांक",
+        statusTitle: "रांगेची स्थिती:",
+        feeTitle: "ओपीडी तपासणी फी:",
+        waitTitle: "अंदाजे वाट पाहण्याची वेळ:",
+        qrTitle: "डॉक्टरांच्या क्यूआर कोडद्वारे फी भरा",
+        btnSimPay: "मी क्यूआर कोडद्वारे पेमेंट केले आहे",
+        btnWa: "व्हाट्सॲपवर टोकन सेव्ह करा",
+        btnCancelToken: "टोकन रद्द करा",
+        staffHeading: "रिसेप्शनिस्ट कंसोल",
+        staffSub: "रांग व्यवस्थापन, डॉक्टर क्यूआर आणि ॲनालिटिक्स",
+        tabQueue: "थेट रांग",
+        tabAnalytics: "ॲनालिटिक्स",
+        opdQueueHdr: "ओपीडी रांग",
+        btnDocQr: "डॉक्टर क्यूआर",
+        btnSched: "वेळापत्रक जोडा",
+        btnEmerg: "इर्मरजन्सी",
+        btnAddp: "रुग्ण जोडा",
+        dragTip: "💡 टीप: प्राधान्य बदलण्यासाठी कार्ड वर-खाली ड्रॅग करा. टोकन क्रमांक आपोआप बदलतील.",
+        analyticsPerf: "कामगिरी आणि नमुने",
+        kpiSeenTitle: "पाहिलेले रुग्ण",
+        kpiTotTitle: "एकूण जमा रक्कम",
+        kpiTrendTitle: "मासिक कल",
+        chartPatTitle: "डॉक्टरांनुसार रुग्ण संख्या",
+        chartRevTitle: "डॉक्टरांनुसार जमा रक्कम (₹)"
+      }
+    };
+
+    function changeLanguage(lang) {
+      currentLang = lang;
+      const dict = translations[lang];
+
+      document.getElementById("lbl-hospital-title").innerText = dict.hospitalTitle;
+      document.getElementById("lbl-hospital-subtitle").innerText = dict.hospitalSubtitle;
+      document.getElementById("lbl-btn-patient-view").innerText = dict.btnPatientView;
+      document.getElementById("lbl-btn-staff-view").innerText = dict.btnStaffView;
+      document.getElementById("lbl-p-header-sub").innerText = dict.pHeaderSub;
+      document.getElementById("lbl-reset").innerText = dict.reset;
+      document.getElementById("lbl-welcome-title").innerText = dict.welcomeTitle;
+      document.getElementById("lbl-welcome-sub").innerText = dict.welcomeSub;
+      document.getElementById("lbl-tap-scan").innerText = dict.tapScan;
+      document.getElementById("lbl-btn-scan").innerText = dict.btnScan;
+      document.getElementById("lbl-reg-heading").innerText = dict.regHeading;
+      document.getElementById("lbl-reg-sub").innerText = dict.regSub;
+      document.getElementById("lbl-p-fullname").innerText = dict.pFullname;
+      document.getElementById("lbl-p-phone").innerText = dict.pPhone;
+      document.getElementById("lbl-p-gender").innerText = dict.pGender;
+      document.getElementById("lbl-p-appt").innerText = dict.pAppt;
+      document.getElementById("lbl-p-doc").innerText = dict.pDoc;
+      document.getElementById("lbl-btn-get-token").innerText = dict.btnGetToken;
+      document.getElementById("lbl-reg-success").innerText = dict.regSuccess;
+      document.getElementById("lbl-your-token").innerText = dict.yourToken;
+      document.getElementById("lbl-status-title").innerText = dict.statusTitle;
+      document.getElementById("lbl-fee-title").innerText = dict.feeTitle;
+      document.getElementById("lbl-wait-title").innerText = dict.waitTitle;
+      document.getElementById("lbl-qr-title").innerText = dict.qrTitle;
+      document.getElementById("lbl-btn-sim-pay").innerText = dict.btnSimPay;
+      document.getElementById("lbl-btn-wa").innerText = dict.btnWa;
+      document.getElementById("lbl-btn-cancel-token").innerText = dict.btnCancelToken;
+      document.getElementById("lbl-staff-heading").innerText = dict.staffHeading;
+      document.getElementById("lbl-staff-sub").innerText = dict.staffSub;
+      document.getElementById("lbl-tab-queue").innerText = dict.tabQueue;
+      document.getElementById("lbl-tab-analytics").innerText = dict.tabAnalytics;
+      document.getElementById("lbl-opd-queue-hdr").innerText = dict.opdQueueHdr;
+      document.getElementById("lbl-btn-doc-qr").innerText = dict.btnDocQr;
+      document.getElementById("lbl-btn-sched").innerText = dict.btnSched;
+      document.getElementById("lbl-btn-emerg").innerText = dict.btnEmerg;
+      document.getElementById("lbl-btn-addp").innerText = dict.btnAddp;
+      document.getElementById("lbl-drag-tip").innerText = dict.dragTip;
+      document.getElementById("lbl-analytics-perf").innerText = dict.analyticsPerf;
+      document.getElementById("lbl-kpi-seen-title").innerText = dict.kpiSeenTitle;
+      document.getElementById("lbl-kpi-tot-title").innerText = dict.kpiTotTitle;
+      document.getElementById("lbl-kpi-trend-title").innerText = dict.kpiTrendTitle;
+      document.getElementById("lbl-chart-pat-title").innerText = dict.chartPatTitle;
+      document.getElementById("lbl-chart-rev-title").innerText = dict.chartRevTitle;
+
+      if (currentActiveToken) {
+        const found = queueList.find(q => q.token == currentActiveToken);
+        if (found) renderPatientTicket(found);
+      }
+      renderStaffDashboard();
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -628,7 +901,6 @@
         }
       });
 
-      // Simulated metrics shift based on period
       if (period === 'day') {
         document.getElementById("kpi-patients-seen").innerText = "42";
         document.getElementById("kpi-total-collection").innerText = "₹21,000";
@@ -683,7 +955,7 @@
         return 0;
       });
 
-      // Token numbers start with 1, 2, 3, 4...
+      // Token numbers start sequentially with 1, 2, 3, 4
       active.forEach((pat, idx) => {
         pat.token = idx + 1;
       });
@@ -730,7 +1002,7 @@
       renderPatientTicket(created);
       renderStaffDashboard();
 
-      let msg = apptTime ? `10m Appointment booked for ${apptTime}! SMS sent to +91 ${phone}` : `Walk-in token registered! SMS sent to +91 ${phone}`;
+      let msg = apptTime ? `SMS sent to +91 ${phone}: 10m Appt booked at ${apptTime}` : `SMS sent to +91 ${phone}: OPD Token #${created.token} registered`;
       showToast(msg);
 
       document.getElementById("patient-screen-form").classList.add("hidden");
@@ -770,6 +1042,22 @@
         payBadge.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300";
         payBadge.innerText = `₹${patient.paymentAmount} Due (Unpaid)`;
       }
+
+      // Update Doctor UPI QR info in Patient screen
+      const docUpi = doctorUPIs[patient.doctor] || "billing@skyhospital";
+      document.getElementById("patient-paying-doc-name").innerText = `You are paying to ${patient.doctor}`;
+      document.getElementById("patient-doc-upi-id").innerText = `UPI ID: ${docUpi}`;
+      document.getElementById("patient-doc-qr-img").src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=upi://pay?pa=${encodeURIComponent(docUpi)}&pn=${encodeURIComponent(patient.doctor)}&am=${patient.paymentAmount}`;
+    }
+
+    function simulatePatientQRPayment() {
+      const patient = queueList.find(q => q.token === currentActiveToken);
+      if (patient) {
+        patient.paymentStatus = "paid_upi";
+        renderPatientTicket(patient);
+        renderStaffDashboard();
+        showToast(`Payment of ₹${patient.paymentAmount} successful via UPI QR! Status updated.`);
+      }
     }
 
     function saveTokenToWhatsApp() {
@@ -801,7 +1089,7 @@
         card.setAttribute("draggable", "true");
         card.dataset.index = index;
 
-        // Robust HTML5 Drag & Drop Listeners
+        // HTML5 Drag & Drop
         card.addEventListener("dragstart", (e) => {
           draggedIndex = index;
           e.dataTransfer.setData("text/plain", index);
@@ -945,6 +1233,7 @@
       }
     }
 
+    // Modal Handlers
     function openManualAddModal() {
       document.getElementById("modal-add-patient").classList.remove("hidden");
       document.getElementById("modal-add-patient").classList.add("flex");
@@ -952,6 +1241,22 @@
     function closeManualAddModal() {
       document.getElementById("modal-add-patient").classList.add("hidden");
       document.getElementById("modal-add-patient").classList.remove("flex");
+    }
+
+    function openDoctorQRManageModal() {
+      document.getElementById("modal-manage-doc-qr").classList.remove("hidden");
+      document.getElementById("modal-manage-doc-qr").classList.add("flex");
+    }
+    function closeDoctorQRManageModal() {
+      document.getElementById("modal-manage-doc-qr").classList.add("hidden");
+      document.getElementById("modal-manage-doc-qr").classList.remove("flex");
+    }
+    function saveDoctorQRs() {
+      doctorUPIs["Dr. Patel"] = document.getElementById("upi-dr-patel").value;
+      doctorUPIs["Dr. Sonone"] = document.getElementById("upi-dr-sonone").value;
+      doctorUPIs["Dr. Rathi"] = document.getElementById("upi-dr-rathi").value;
+      closeDoctorQRManageModal();
+      showToast("Doctor UPI QR codes successfully updated!");
     }
 
     function openScheduleModal() {
@@ -985,7 +1290,7 @@
       closeEmergencyModal();
       
       let delayText = duration === 'full' ? 'marked unavailable for the day due to emergency operation' : `delayed by ${duration} mins due to emergency operation`;
-      showToast(`Emergency Alert: ${doc} status updated (${delayText}). Notifications sent to waiting patients.`, 'rose');
+      showToast(`Emergency Alert: ${doc} status updated (${delayText}). Broadcast SMS alerts sent to waiting patients.`, 'rose');
     }
 
     function handleStaffManualSubmit(e) {
@@ -1012,7 +1317,7 @@
       renderStaffDashboard();
       closeManualAddModal();
 
-      let msg = apptTime ? `10m Appointment booked for ${name} at ${apptTime}. SMS sent to +91 ${phone}` : `Patient ${name} added to queue. SMS sent to +91 ${phone}`;
+      let msg = apptTime ? `SMS sent to +91 ${phone}: 10m Appt booked at ${apptTime}` : `SMS sent to +91 ${phone}: Token registered`;
       showToast(msg);
     }
 
