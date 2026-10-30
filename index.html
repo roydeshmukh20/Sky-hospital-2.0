@@ -56,7 +56,7 @@
       <!-- View Switcher -->
       <div class="flex items-center bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs sm:text-sm">
         <button id="nav-btn-patient" onclick="setViewMode('patient')" class="px-3 py-1.5 rounded-md font-medium transition-all bg-blue-600 text-white">
-          <i class="fa-solid fa-mobile-screen mr-1.5"></i> Patient App
+          <i class="fa-solid fa-mobile-screen mr-1.5"></i> Patient View
         </button>
         <button id="nav-btn-staff" onclick="setViewMode('staff')" class="px-3 py-1.5 rounded-md font-medium transition-all text-slate-300 hover:text-white">
           <i class="fa-solid fa-desktop mr-1.5"></i> Receptionist Desk
@@ -69,16 +69,14 @@
   <main class="max-w-7xl mx-auto p-4 sm:p-6 flex justify-center">
     <div id="app-wrapper" class="w-full flex justify-center">
 
-      <!-- ================= PATIENT MOBILE APP ================= -->
+      <!-- ================= PATIENT VIEW (PHONE FRAMED FOR PREVIEW) ================= -->
       <section id="patient-container" class="w-full flex flex-col items-center">
         <div class="w-full max-w-sm bg-black p-3 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
-          
           <div class="w-32 h-4 bg-slate-900 mx-auto rounded-b-xl mb-2 flex justify-center items-center">
             <div class="w-12 h-1 bg-slate-700 rounded-full"></div>
           </div>
 
           <div class="bg-slate-50 rounded-[30px] overflow-hidden min-h-[670px] flex flex-col text-slate-800 border border-slate-200 relative">
-            
             <div class="bg-blue-700 text-white p-4 shadow-sm flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <i class="fa-solid fa-hospital text-xl"></i>
@@ -93,7 +91,6 @@
             </div>
 
             <div class="p-4 flex-1 overflow-y-auto custom-scrollbar">
-
               <!-- SCREEN 0: SCAN QR CODE -->
               <div id="patient-screen-scan" class="flex flex-col items-center justify-center h-full text-center py-6">
                 <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4 w-full">
@@ -120,7 +117,7 @@
               <div id="patient-screen-form" class="hidden space-y-3">
                 <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl text-center">
                   <p class="text-xs text-blue-800 font-semibold">📍 OPD Queue Registration</p>
-                  <p class="text-[11px] text-blue-600">Fill details or book a specific time slot (10 min slots)</p>
+                  <p class="text-[11px] text-blue-600">Fill details or book a 10-minute time slot</p>
                 </div>
 
                 <form id="patient-reg-form" onsubmit="handlePatientSubmit(event)" class="space-y-3 text-left">
@@ -182,7 +179,6 @@
                   <p id="ticket-appt-time" class="text-[11px] text-amber-300 mt-1 font-semibold">Walk-In Queue</p>
                 </div>
 
-                <!-- LIVE STATUS & BILLING CARD -->
                 <div class="bg-white rounded-xl p-3 border border-slate-200 shadow-sm space-y-2 text-xs">
                   <div class="flex justify-between items-center pb-2 border-b border-slate-100">
                     <span class="text-slate-500 font-medium">Queue Status:</span>
@@ -204,7 +200,6 @@
                   </div>
                 </div>
 
-                <!-- WHATSAPP SAVE WORKFLOW -->
                 <button onclick="saveTokenToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl shadow transition-all flex items-center justify-center gap-2">
                   <i class="fa-brands fa-whatsapp text-sm"></i> Save Token to My WhatsApp
                 </button>
@@ -213,59 +208,54 @@
                   <i class="fa-solid fa-xmark mr-1"></i> Cancel Token
                 </button>
               </div>
-
             </div>
 
             <div class="p-2 text-center bg-slate-100 border-t border-slate-200">
               <div class="w-24 h-1 bg-slate-400 rounded-full mx-auto"></div>
             </div>
-
           </div>
         </div>
       </section>
 
-      <!-- ================= FRONT DESK STAFF DASHBOARD (RESPONSIVE SMARTPHONE FRAME) ================= -->
-      <section id="staff-container" class="hidden w-full flex flex-col items-center">
-        <div class="w-full max-w-sm bg-black p-3 rounded-[40px] shadow-2xl border-4 border-slate-800 relative">
-          
-          <div class="w-32 h-4 bg-slate-900 mx-auto rounded-b-xl mb-2 flex justify-center items-center">
-            <div class="w-12 h-1 bg-slate-700 rounded-full"></div>
+      <!-- ================= RECEPTIONIST DESK (DIRECT PHONE-RESPONSIVE EXPERIENCE, NO PHONE FRAME) ================= -->
+      <section id="staff-container" class="hidden w-full max-w-2xl flex flex-col space-y-4">
+        
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-800">Receptionist Queue & Appointment Console</h2>
+            <p class="text-xs text-slate-500">Manage queue priority via drag & drop, configure schedules, & record UPI/Cash payments</p>
           </div>
-
-          <div class="bg-slate-50 rounded-[30px] overflow-hidden min-h-[670px] flex flex-col text-slate-800 border border-slate-200 relative">
-            
-            <div class="bg-slate-900 text-white p-3 shadow-sm flex items-center justify-between">
-              <div>
-                <h2 class="font-bold text-xs leading-tight">Receptionist Console</h2>
-                <p class="text-[9px] text-slate-400">Drag & Drop Priority & Management</p>
-              </div>
-              <div class="flex gap-1">
-                <button onclick="openScheduleModal()" title="Add Doctor Schedule" class="bg-slate-800 hover:bg-slate-700 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-calendar-days"></i></button>
-                <button onclick="openEmergencyModal()" title="Emergency Block" class="bg-rose-600 hover:bg-rose-700 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-triangle-exclamation"></i></button>
-                <button onclick="openManualAddModal()" title="Add Patient" class="bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-plus"></i></button>
-                <button onclick="openQRModal()" title="QR Code" class="bg-slate-700 hover:bg-slate-600 text-white p-1.5 rounded text-[10px]"><i class="fa-solid fa-qrcode"></i></button>
-              </div>
-            </div>
-
-            <div class="p-3 flex-1 overflow-y-auto custom-scrollbar space-y-3">
-              <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center text-xs">
-                <span class="font-bold text-slate-700">Active OPD Queue</span>
-                <span id="queue-count-badge" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">3 Active</span>
-              </div>
-              <p class="text-[10px] text-slate-500 italic text-center">💡 Tip: Drag & drop rows up/down to reorder priority.</p>
-
-              <!-- DRAGGABLE QUEUE LIST CONTAINER -->
-              <div id="staff-queue-cards" class="space-y-2">
-                <!-- Dynamically populated cards via JS -->
-              </div>
-            </div>
-
-            <div class="p-2 text-center bg-slate-100 border-t border-slate-200">
-              <div class="w-24 h-1 bg-slate-400 rounded-full mx-auto"></div>
-            </div>
-
+          <div class="flex flex-wrap gap-1.5">
+            <button onclick="openScheduleModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1">
+              <i class="fa-solid fa-calendar-days"></i> Add Schedule
+            </button>
+            <button onclick="openEmergencyModal()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1">
+              <i class="fa-solid fa-triangle-exclamation"></i> Emergency Block
+            </button>
+            <button onclick="openManualAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i> Add Patient
+            </button>
+            <button onclick="openQRModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1">
+              <i class="fa-solid fa-qrcode"></i> QR
+            </button>
           </div>
         </div>
+
+        <!-- REAL-TIME QUEUE & DRAG-DROP CONTAINER -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col p-4">
+          <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-3">
+            <div class="flex items-center gap-2">
+              <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Live OPD Patient Queue</h3>
+              <span id="queue-count-badge" class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">3 Active</span>
+            </div>
+            <span class="text-[11px] text-slate-500 italic">💡 Drag & drop rows to reorder priority</span>
+          </div>
+
+          <div id="staff-queue-cards" class="space-y-2.5">
+            <!-- Dynamically populated cards via JS -->
+          </div>
+        </div>
+
       </section>
 
     </div>
@@ -274,38 +264,38 @@
   <!-- MODALS -->
   <!-- ADD PATIENT / APPT MODAL -->
   <div id="modal-add-patient" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-2xl border border-slate-200">
-      <div class="flex justify-between items-center pb-2 border-b border-slate-100 mb-3">
-        <h3 class="font-bold text-sm text-slate-800">Add Patient / 10m Appt</h3>
-        <button onclick="closeManualAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 mb-4">
+        <h3 class="font-bold text-base text-slate-800">Add Patient / 10m Appointment</h3>
+        <button onclick="closeManualAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <form onsubmit="handleStaffManualSubmit(event)" class="space-y-2.5 text-xs">
+      <form onsubmit="handleStaffManualSubmit(event)" class="space-y-3 text-xs">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Full Name *</label>
-          <input type="text" id="m-name" required placeholder="Full Name" class="w-full p-2 rounded-lg border border-slate-300">
+          <label class="block font-bold text-slate-700 mb-1">Patient Full Name *</label>
+          <input type="text" id="m-name" required placeholder="Full Name" class="w-full p-2.5 rounded-lg border border-slate-300">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Mobile Number *</label>
-          <input type="tel" id="m-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full p-2 rounded-lg border border-slate-300">
+          <input type="tel" id="m-phone" required pattern="[0-9]{10}" maxlength="10" placeholder="9876543210" class="w-full p-2.5 rounded-lg border border-slate-300">
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 mb-1">Gender</label>
-            <select id="m-gender" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
+            <select id="m-gender" class="w-full p-2.5 rounded-lg border border-slate-300 bg-white">
               <option value="Male">Male</option>
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Appt Time (10m)</label>
-            <input type="time" id="m-time" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
+            <label class="block font-bold text-slate-700 mb-1">Appt Time (10m Slot)</label>
+            <input type="time" id="m-time" class="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Doctor</label>
-            <select id="m-doctor" class="w-full p-2 rounded-lg border border-slate-300 bg-white">
+            <label class="block font-bold text-slate-700 mb-1">Doctor Assigned</label>
+            <select id="m-doctor" class="w-full p-2.5 rounded-lg border border-slate-300 bg-white">
               <option value="Any Doctor">Any Doctor</option>
               <option value="Dr. Patel">Dr. Patel</option>
               <option value="Dr. Sonone">Dr. Sonone</option>
@@ -313,13 +303,13 @@
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Fee (₹)</label>
-            <input type="number" id="m-fee" value="500" min="0" step="50" class="w-full p-2 rounded-lg border border-slate-300 font-bold">
+            <label class="block font-bold text-slate-700 mb-1">Consultation Fee (₹)</label>
+            <input type="number" id="m-fee" value="500" min="0" step="50" class="w-full p-2.5 rounded-lg border border-slate-300 font-bold">
           </div>
         </div>
         <div class="pt-2 flex justify-end gap-2">
-          <button type="button" onclick="closeManualAddModal()" class="px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-          <button type="submit" class="px-3 py-1.5 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Book & Notify</button>
+          <button type="button" onclick="closeManualAddModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button type="submit" class="px-4 py-2 font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700">Book & Notify</button>
         </div>
       </form>
     </div>
@@ -327,16 +317,16 @@
 
   <!-- ADD DOCTOR SCHEDULE MODAL -->
   <div id="modal-schedule" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-4 shadow-2xl border border-slate-200 space-y-3 text-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-3 text-xs">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-sm text-slate-800">Add Doctor Schedule (7-Day)</h3>
-        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        <h3 class="font-bold text-base text-slate-800">Add Doctor Schedule (7-Day Advance)</h3>
+        <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <p class="text-[11px] text-slate-500">Configure advance shift availability for selected doctors.</p>
+      <p class="text-slate-500">Configure advance shift hours for specific doctors.</p>
       
       <div>
         <label class="block font-bold text-slate-700 mb-1">Select Doctor</label>
-        <select id="sched-doctor" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
+        <select id="sched-doctor" class="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
           <option value="Dr. Patel">Dr. Patel (General Physician)</option>
           <option value="Dr. Sonone">Dr. Sonone (Pediatrician)</option>
           <option value="Dr. Rathi">Dr. Rathi (Orthopedics)</option>
@@ -346,45 +336,45 @@
       <div class="grid grid-cols-2 gap-2">
         <div>
           <label class="block font-bold text-slate-700 mb-1">Shift Start</label>
-          <input type="time" id="sched-start" value="09:00" class="w-full p-2 rounded-lg border border-slate-300">
+          <input type="time" id="sched-start" value="09:00" class="w-full p-2.5 rounded-lg border border-slate-300">
         </div>
         <div>
           <label class="block font-bold text-slate-700 mb-1">Shift End</label>
-          <input type="time" id="sched-end" value="14:00" class="w-full p-2 rounded-lg border border-slate-300">
+          <input type="time" id="sched-end" value="14:00" class="w-full p-2.5 rounded-lg border border-slate-300">
         </div>
       </div>
 
       <div>
         <label class="block font-bold text-slate-700 mb-1">Days Active</label>
-        <div class="flex flex-wrap gap-1 text-[10px]">
-          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Mon</label>
-          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Tue</label>
-          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Wed</label>
-          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Thu</label>
-          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox" checked> Fri</label>
-          <label class="bg-slate-100 px-2 py-1 rounded border"><input type="checkbox"> Sat</label>
+        <div class="flex flex-wrap gap-2">
+          <label class="bg-slate-100 px-2.5 py-1 rounded border"><input type="checkbox" checked> Mon</label>
+          <label class="bg-slate-100 px-2.5 py-1 rounded border"><input type="checkbox" checked> Tue</label>
+          <label class="bg-slate-100 px-2.5 py-1 rounded border"><input type="checkbox" checked> Wed</label>
+          <label class="bg-slate-100 px-2.5 py-1 rounded border"><input type="checkbox" checked> Thu</label>
+          <label class="bg-slate-100 px-2.5 py-1 rounded border"><input type="checkbox" checked> Fri</label>
+          <label class="bg-slate-100 px-2.5 py-1 rounded border"><input type="checkbox"> Sat</label>
         </div>
       </div>
 
       <div class="flex justify-end pt-2 gap-2">
-        <button type="button" onclick="closeScheduleModal()" class="px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-        <button onclick="saveSchedule()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg">Save Schedule</button>
+        <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="saveSchedule()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg">Save Schedule</button>
       </div>
     </div>
   </div>
 
   <!-- EMERGENCY BLOCK MODAL -->
   <div id="modal-emergency" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-2xl max-w-xs w-full p-4 shadow-2xl border border-slate-200 space-y-3 text-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-3 text-xs">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-        <h3 class="font-bold text-sm text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency Block</h3>
-        <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        <h3 class="font-bold text-base text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Emergency OPD Delay Block</h3>
+        <button onclick="closeEmergencyModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <p class="text-[11px] text-slate-600">Select doctor called for emergency operation to adjust wait times and notify patients.</p>
+      <p class="text-slate-600">Select doctor called for emergency operation to adjust wait times and notify patients.</p>
       
       <div>
         <label class="block font-bold text-slate-700 mb-1">Select Doctor</label>
-        <select id="emergency-doctor" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
+        <select id="emergency-doctor" class="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
           <option value="Dr. Patel">Dr. Patel</option>
           <option value="Dr. Sonone">Dr. Sonone</option>
           <option value="Dr. Rathi">Dr. Rathi</option>
@@ -394,7 +384,7 @@
 
       <div>
         <label class="block font-bold text-slate-700 mb-1">Delay Duration / Unavailability</label>
-        <select id="emergency-duration" class="w-full p-2 rounded-lg border border-slate-300 bg-white font-bold">
+        <select id="emergency-duration" class="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-bold">
           <option value="30">30 Minutes Delay</option>
           <option value="60">1 Hour Delay</option>
           <option value="90">1.5 Hours Delay</option>
@@ -404,8 +394,8 @@
       </div>
 
       <div class="pt-2 flex justify-end gap-2">
-        <button type="button" onclick="closeEmergencyModal()" class="px-3 py-1.5 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-        <button onclick="triggerEmergencyBlock()" class="px-3 py-1.5 font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow">Apply & Notify</button>
+        <button type="button" onclick="closeEmergencyModal()" class="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="triggerEmergencyBlock()" class="px-4 py-2 font-bold bg-rose-600 text-white rounded-lg hover:bg-rose-700 shadow">Apply & Notify</button>
       </div>
     </div>
   </div>
@@ -434,9 +424,9 @@
     let draggedIndex = null;
 
     let queueList = [
-      { token: 101, name: "Amit Sharma", phone: "9823011223", doctor: "Dr. Patel", apptTime: "09:30", status: "With Doctor", paymentAmount: 500, isPaid: true },
-      { token: 102, name: "Priya Deshmukh", phone: "9765432109", doctor: "Dr. Sonone", apptTime: "09:40", status: "Waiting to see Doctor", paymentAmount: 500, isPaid: false },
-      { token: 103, name: "Rahul Verma", phone: "9988776655", doctor: "Dr. Rathi", apptTime: "", status: "Waiting to see Doctor", paymentAmount: 500, isPaid: false }
+      { token: 101, name: "Amit Sharma", phone: "9823011223", doctor: "Dr. Patel", apptTime: "09:30", status: "With Doctor", paymentAmount: 500, paymentStatus: "paid_upi" },
+      { token: 102, name: "Priya Deshmukh", phone: "9765432109", doctor: "Dr. Sonone", apptTime: "09:40", status: "Waiting to see Doctor", paymentAmount: 500, paymentStatus: "due" },
+      { token: 103, name: "Rahul Verma", phone: "9988776655", doctor: "Dr. Rathi", apptTime: "", status: "Waiting to see Doctor", paymentAmount: 500, paymentStatus: "due" }
     ];
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -500,7 +490,6 @@
       }, 4000);
     }
 
-    // Sort queue logic: Scheduled appointments (10m slots) come first chronologically, followed by walk-ins
     function sortAndAssignTokens() {
       let active = queueList.filter(q => q.status !== "Visit Complete" && q.status !== "Cancelled");
       let finished = queueList.filter(q => q.status === "Visit Complete" || q.status === "Cancelled");
@@ -546,7 +535,7 @@
         apptTime: apptTime || "",
         status: "Waiting to see Doctor",
         paymentAmount: defaultFee,
-        isPaid: false
+        paymentStatus: "due"
       };
 
       queueList.push(newPatient);
@@ -588,9 +577,12 @@
       }
 
       const payBadge = document.getElementById("ticket-payment-badge");
-      if (patient.isPaid) {
+      if (patient.paymentStatus === "paid_upi") {
         payBadge.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
-        payBadge.innerText = `₹${patient.paymentAmount} Paid ✓`;
+        payBadge.innerText = `₹${patient.paymentAmount} Paid (UPI) ✓`;
+      } else if (patient.paymentStatus === "paid_cash") {
+        payBadge.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300";
+        payBadge.innerText = `₹${patient.paymentAmount} Paid (Cash) ✓`;
       } else {
         payBadge.className = "px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300";
         payBadge.innerText = `₹${patient.paymentAmount} Due (Unpaid)`;
@@ -622,11 +614,10 @@
         if (patient.status === "Cancelled") return;
 
         const card = document.createElement("div");
-        card.className = "draggable-row bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs relative group";
+        card.className = "draggable-row bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-2 text-xs relative group";
         card.setAttribute("draggable", "true");
         card.dataset.index = index;
 
-        // Drag and Drop event listeners
         card.addEventListener("dragstart", (e) => {
           draggedIndex = index;
           e.dataTransfer.effectAllowed = "move";
@@ -657,11 +648,11 @@
         else if (patient.status === 'With Doctor') statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-300";
         else if (patient.status === 'Visit Complete') statusBadgeClass = "bg-slate-100 text-slate-600 border-slate-300";
 
-        let paymentDropdownClass = patient.isPaid ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold" : "bg-rose-100 text-rose-800 border-rose-300 font-bold";
+        let paymentDropdownClass = patient.paymentStatus === "due" ? "bg-rose-100 text-rose-800 border-rose-300 font-bold" : "bg-emerald-100 text-emerald-800 border-emerald-300 font-bold";
 
         card.innerHTML = `
           <div class="flex justify-between items-center border-b border-slate-100 pb-1.5">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-2">
               <i class="fa-solid fa-grip-vertical text-slate-400 cursor-grab"></i>
               <span class="font-black text-blue-700 text-sm">#${patient.token}</span>
               <span class="font-bold text-slate-800">${patient.name}</span>
@@ -674,8 +665,8 @@
             <div><strong>Appt:</strong> ${patient.apptTime ? '<i class="fa-solid fa-clock text-blue-500"></i> ' + patient.apptTime + ' (10m)' : 'Walk-In'}</div>
           </div>
 
-          <div class="flex items-center justify-between pt-1 gap-2">
-            <select onchange="updatePatientStatus(${patient.token}, this.value)" class="text-[10px] font-bold p-1 rounded border shadow-sm outline-none ${statusBadgeClass}">
+          <div class="flex flex-wrap items-center justify-between pt-1 gap-2">
+            <select onchange="updatePatientStatus(${patient.token}, this.value)" class="text-[10px] font-bold p-1.5 rounded border shadow-sm outline-none ${statusBadgeClass}">
               <option value="Waiting to see Doctor" ${patient.status === 'Waiting to see Doctor' ? 'selected' : ''}>⏳ Waiting</option>
               <option value="With Doctor" ${patient.status === 'With Doctor' ? 'selected' : ''}>🟢 With Doctor</option>
               <option value="Visit Complete" ${patient.status === 'Visit Complete' ? 'selected' : ''}>🏁 Complete</option>
@@ -683,11 +674,12 @@
             </select>
 
             <div class="flex items-center gap-1 bg-slate-50 p-1 rounded border border-slate-200">
-              <span class="text-slate-400">₹</span>
+              <span class="text-slate-400 font-semibold">₹</span>
               <input type="number" value="${patient.paymentAmount}" min="0" step="50" onchange="updatePatientFee(${patient.token}, this.value)" class="w-12 text-[11px] font-bold text-slate-800 bg-white border border-slate-300 rounded px-1 outline-none">
-              <select onchange="updatePaymentStatus(${patient.token}, this.value)" class="text-[10px] p-0.5 rounded border outline-none ${paymentDropdownClass}">
-                <option value="due" ${!patient.isPaid ? 'selected' : ''}>Due</option>
-                <option value="paid" ${patient.isPaid ? 'selected' : ''}>Paid</option>
+              <select onchange="updatePaymentStatus(${patient.token}, this.value)" class="text-[10px] p-1 rounded border outline-none ${paymentDropdownClass}">
+                <option value="due" ${patient.paymentStatus === 'due' ? 'selected' : ''}>Due</option>
+                <option value="paid_upi" ${patient.paymentStatus === 'paid_upi' ? 'selected' : ''}>Paid (UPI)</option>
+                <option value="paid_cash" ${patient.paymentStatus === 'paid_cash' ? 'selected' : ''}>Paid (Cash)</option>
               </select>
             </div>
           </div>
@@ -704,7 +696,7 @@
       active.splice(toIdx, 0, movedItem);
 
       queueList = [...active, ...finished];
-      sortAndAssignTokens(); // re-evaluates tokens based on manual drag priority
+      sortAndAssignTokens();
       renderStaffDashboard();
       showToast("Queue priority reordered via drag & drop! Token numbers updated.");
     }
@@ -735,7 +727,7 @@
     function updatePaymentStatus(token, statusVal) {
       const patient = queueList.find(q => q.token === token);
       if (patient) {
-        patient.isPaid = (statusVal === 'paid');
+        patient.paymentStatus = statusVal;
         renderStaffDashboard();
         if (currentActiveToken === token) {
           renderPatientTicket(patient);
@@ -764,7 +756,6 @@
       }
     }
 
-    // Modal Controls
     function openManualAddModal() {
       document.getElementById("modal-add-patient").classList.remove("hidden");
       document.getElementById("modal-add-patient").classList.add("flex");
@@ -821,7 +812,7 @@
         apptTime: apptTime || "",
         status: "Waiting to see Doctor",
         paymentAmount: fee,
-        isPaid: false
+        paymentStatus: "due"
       };
 
       queueList.push(newPatient);
