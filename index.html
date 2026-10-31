@@ -19,8 +19,9 @@
   .pulse{animation:pulseDot 1.6s infinite}
   @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
   .toast{animation:slideIn .2s ease-out}
-  .drag-handle{touch-action:none;cursor:grab}
-  .qcard.dragging{opacity:.85;box-shadow:0 12px 28px rgba(15,23,42,.25);outline:2px solid #2563eb}
+  .draggable-row { cursor: grab; }
+  .draggable-row:active { cursor: grabbing; }
+  .drag-over { background-color: #eff6ff !important; border: 2px dashed #3b82f6 !important; }
   dialog{border:0;padding:0;border-radius:1rem;max-height:92vh;overflow:auto}
   dialog::backdrop{background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
   .no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}
@@ -40,8 +41,8 @@
 
 /* ───────────── Constants & Storage ───────────── */
 const SLOT = 10;
-const KEY = 'sky_opd_v3';
-const UIKEY = 'sky_opd_ui_v3';
+const KEY = 'sky_opd_v5';
+const UIKEY = 'sky_opd_ui_v5';
 const LOC = {en:'en-IN', hi:'hi-IN', mr:'mr-IN'};
 const mem = {};
 const store = (area) => ({
@@ -69,61 +70,61 @@ const baseUrl = () => location.href.split(/[?#]/)[0];
 const T = {
 en:{
  navPatient:'Patient',navReception:'Reception',navAdmin:'Admin',brandSub:'Digital OPD · Queue & Billing',
- scanTitle:'Welcome to Sky Hospital',scanSub:'Scan the front-desk QR code to join today’s OPD queue.',scanTap:'Tap to scan',scanBtn:'Scan QR code',scanDemo:'Demo: tapping simulates camera scan.',
+ scanTitle:'Welcome to Sky Hospital',scanSub:'Scan the front-desk QR code to join today’s OPD queue.',scanTap:'Tap to scan',scanBtn:'Scan QR code',
  regTitle:'New Patient OPD Registration',regSub:'Quick registration & appointment booking.',
  fullName:'Full Name *',namePh:'e.g. Rajesh Kumar',mobile:'Mobile Number *',mobileHint:'Token updates are sent by SMS/WhatsApp.',
- ageOrDob:'Age / Date of Birth *',agePh:'e.g. 34 or 1990-05-15',gender:'Gender *',male:'Male',female:'Female',other:'Other',address:'Address (Optional)',addPh:'Area / City',
+ ageOrDob:'Age / Date of Birth *',agePh:'e.g. 34 or 1990-05-15',gender:'Gender *',male:'Male',female:'Female',address:'Address (Optional)',addPh:'Area / City',
  chooseDoctor:'Select Doctor *',chooseDay:'Select Day',shift:'Shift',morning:'Morning OPD',evening:'Evening OPD',chooseSlot:'Select Appointment Slot',
  walkIn:'Walk-in · Immediate Token',walkInHint:'Join active queue right now',noSlots:'No slots in this shift.',noOpd:'No OPD / On Leave',todayLbl:'Today',
  delayed:'Delayed ~{m} min',unavailable:'Unavailable today',vacation:'Doctor on Time-off / Vacation',feeLbl:'Consultation fee',
  getToken:'Get Walk-in Token',bookSlot:'Book {time} Slot',
- errName:'Please enter full name.',errPhone:'Enter a valid 10-digit mobile number.',errAge:'Enter age or DOB.',errDoctor:'Please select a doctor.',errSlot:'Pick a time slot or walk-in.',
+ errName:'Please enter full name.',errPhone:'Enter a valid 10-digit mobile number.',errAge:'Enter age or DOB.',errDoctor:'Please select a doctor.',
  tokenYour:'Your Token',walkInQ:'Walk-in queue',slotAt:'Slot {time}',
  stWaiting:'Waiting',stWith:'With Doctor',stDone:'Visit Complete',stCancelled:'Cancelled',
  ahead:'{n} ahead of you',aheadNone:'You’re next',nowServing:'Now serving',estWait:'Est. Wait',min:'min',
  feeTitle:'Consultation Fee',due:'Unpaid',paid:'Paid',
  saveWa:'Share on WhatsApp',cancelTok:'Cancel Token',newReg:'New Patient Entry',
- manageDocs:'Manage Doctors & Timings',addDoc:'Add Doctor',editDoc:'Edit Doctor',deleteDoc:'Delete Doctor',
+ manageDocs:'Manage Doctors & Timings',addDoc:'Add Doctor',
  weeklyPattern:'Weekly Shift Timings',vacationBlock:'Time-Off / Vacation Blocks',
  m_cash:'Cash',m_upi:'UPI',m_upi_qr:'UPI QR'
 },
 hi:{
  navPatient:'मरीज़',navReception:'रिसेप्शन',navAdmin:'एडमिन',brandSub:'डिजिटल OPD · टोकन व बिलिंग',
- scanTitle:'स्काय हॉस्पिटल में आपका स्वागत है',scanSub:'आज की OPD कतार में जुड़ने के लिए QR कोड स्कैन करें।',scanTap:'स्कैन के लिए टैप करें',scanBtn:'QR कोड स्कैन करें',scanDemo:'डेमो: टैप करने पर कैमरा स्कैन का अनुकरण होता है।',
+ scanTitle:'स्काय हॉस्पिटल में आपका स्वागत है',scanSub:'आज की OPD कतार में जुड़ने के लिए QR कोड स्कैन करें।',scanTap:'स्कैन के लिए टैप करें',scanBtn:'QR कोड स्कैन करें',
  regTitle:'नया मरीज़ OPD पंजीकरण',regSub:'त्वरित पंजीकरण और अपॉइंटमेंट बुकिंग।',
  fullName:'पूरा नाम *',namePh:'जैसे राजेश कुमार',mobile:'मोबाइल नंबर *',mobileHint:'टोकन अपडेट SMS और WhatsApp पर भेजे जाएंगे।',
- ageOrDob:'उम्र / जन्म तिथि *',agePh:'जैसे 34 या 1990-05-15',gender:'लिंग *',male:'पुरुष',female:'महिला',other:'अन्य',address:'पता (वैकल्पिक)',addPh:'क्षेत्र / शहर',
+ ageOrDob:'उम्र / जन्म तिथि *',agePh:'जैसे 34 या 1990-05-15',gender:'लिंग *',male:'पुरुष',female:'महिला',address:'पता (वैकल्पिक)',addPh:'क्षेत्र / शहर',
  chooseDoctor:'डॉक्टर चुनें *',chooseDay:'दिन चुनें',shift:'शिफ्ट',morning:'सुबह की OPD',evening:'शाम की OPD',chooseSlot:'अपॉइंटमेंट स्लॉट चुनें',
  walkIn:'वॉक-इन · तत्काल टोकन',walkInHint:'अभी ओपीडी कतार में जुड़ें',noSlots:'इस शिफ्ट में कोई स्लॉट नहीं।',noOpd:'OPD नहीं / छुट्टी पर',todayLbl:'आज',
  delayed:'~{m} मिनट देरी',unavailable:'आज उपलब्ध नहीं',vacation:'डॉक्टर छुट्टी पर हैं',feeLbl:'परामर्श शुल्क',
  getToken:'वॉक-इन टोकन लें',bookSlot:'{time} का स्लॉट बुक करें',
- errName:'कृपया पूरा नाम लिखें।',errPhone:'10 अंकों का मोबाइल नंबर लिखें।',errAge:'उम्र या जन्म तिथि लिखें।',errDoctor:'कृपया डॉक्टर चुनें।',errSlot:'कृपया स्लॉट या वॉक-इन चुनें।',
+ errName:'कृपया पूरा नाम लिखें।',errPhone:'10 अंकों का मोबाइल नंबर लिखें।',errAge:'उम्र या जन्म तिथि लिखें।',errDoctor:'कृपया डॉक्टर चुनें।',
  tokenYour:'आपका टोकन',walkInQ:'वॉक-इन कतार',slotAt:'स्लॉट {time}',
  stWaiting:'प्रतीक्षा में',stWith:'डॉक्टर के पास',stDone:'विज़िट पूरी',stCancelled:'रद्द',
  ahead:'आपसे आगे {n}',aheadNone:'अगला नंबर आपका है',nowServing:'अभी चल रहा',estWait:'अनुमानित प्रतीक्षा',min:'मिनट',
  feeTitle:'परामर्श शुल्क',due:'बकाया',paid:'भुगतान हुआ',
  saveWa:'WhatsApp पर शेयर करें',cancelTok:'टोकन रद्द करें',newReg:'नया मरीज़ एंट्री',
- manageDocs:'डॉक्टर और समय प्रबंधन',addDoc:'डॉक्टर जोड़ें',editDoc:'डॉक्टर संपादन',deleteDoc:'डॉक्टर हटाएं',
+ manageDocs:'डॉक्टर और समय प्रबंधन',addDoc:'डॉक्टर जोड़ें',
  weeklyPattern:'साप्ताहिक शिफ्ट का समय',vacationBlock:'छुट्टी / वैकेशन ब्लॉक',
  m_cash:'नकद',m_upi:'UPI',m_upi_qr:'UPI QR'
 },
 mr:{
  navPatient:'रुग्ण',navReception:'रिसेप्शन',navAdmin:'ॲडमिन',brandSub:'डिजिटल OPD · टोकन व बिलिंग',
- scanTitle:'स्काय हॉस्पिटलमध्ये आपले स्वागत आहे',scanSub:'आजच्या OPD रांगेत सामील होण्यासाठी QR कोड स्कॅन करा.',scanTap:'स्कॅन करण्यासाठी टॅप करा',scanBtn:'QR कोड स्कॅन करा',scanDemo:'डेमो: टॅप केल्यावर कॅमेरा स्कॅनची नक्कल होते.',
+ scanTitle:'स्काय हॉस्पिटलमध्ये आपले स्वागत आहे',scanSub:'आजच्या OPD रांगेत सामील होण्यासाठी QR कोड स्कॅन करा.',scanTap:'स्कॅन करण्यासाठी टॅप करा',scanBtn:'QR कोड स्कॅन करा',
  regTitle:'नवीन रुग्ण OPD नोंदणी',regSub:'जलद नोंदणी आणि अपॉइंटमेंट बुकिंग.',
  fullName:'पूर्ण नाव *',namePh:'उदा. राजेश कुमार',mobile:'मोबाईल नंबर *',mobileHint:'टोकन अपडेट SMS आणि WhatsApp वर पाठवले जातील.',
- ageOrDob:'वय / जन्मतारीख *',agePh:'उदा. 34 किंवा 1990-05-15',gender:'लिंग *',male:'पुरुष',female:'महिला',other:'इतर',address:'पत्ता (पर्यायी)',addPh:'भाग / शहर',
+ ageOrDob:'वय / जन्मतारीख *',agePh:'उदा. 34 किंवा 1990-05-15',gender:'लिंग *',male:'पुरुष',female:'महिला',address:'पत्ता (पर्यायी)',addPh:'भाग / शहर',
  chooseDoctor:'डॉक्टर निवडा *',chooseDay:'दिवस निवडा',shift:'शिफ्ट',morning:'सकाळची OPD',evening:'संध्याकाळची OPD',chooseSlot:'अपॉइंटमेंट स्लॉट निवडा',
  walkIn:'वॉक-इन · तात्काळ टोकन',walkInHint:'आत्ताच रांगेत सामील व्हा',noSlots:'या शिफ्टमध्ये स्लॉट नाहीत.',noOpd:'OPD नाही / सुट्टीवर',todayLbl:'आज',
  delayed:'~{m} मिनिटे उशीर',unavailable:'आज उपलब्ध नाहीत',vacation:'डॉक्टर सुट्टीवर आहेत',feeLbl:'तपासणी फी',
  getToken:'वॉक-इन टोकन घ्या',bookSlot:'{time} चा स्लॉट बुक करा',
- errName:'कृपया नाव लिहा.',errPhone:'१० अंकी मोबाईल नंबर लिहा.',errAge:'वय किंवा जन्मतारीख लिहा.',errDoctor:'कृपया डॉक्टर निवडा.',errSlot:'कृपया स्लॉट किंवा वॉक-इन निवडा.',
+ errName:'कृपया नाव लिहा.',errPhone:'१० अंकी मोबाईल नंबर लिहा.',errAge:'वय किंवा जन्मतारीख लिहा.',errDoctor:'कृपया डॉक्टर निवडा.',
  tokenYour:'तुमचा टोकन',walkInQ:'वॉक-इन रांग',slotAt:'स्लॉट {time}',
  stWaiting:'प्रतीक्षेत',stWith:'डॉक्टरांकडे',stDone:'तपासणी पूर्ण',stCancelled:'रद्द',
  ahead:'तुमच्या पुढे {n}',aheadNone:'पुढचा नंबर तुमचा आहे',nowServing:'सध्या सुरू',estWait:'अंदाजे प्रतीक्षा',min:'मिनिटे',
  feeTitle:'तपासणी फी',due:'बाकी',paid:'भरले',
  saveWa:'WhatsApp वर शेअर करा',cancelTok:'टोकन रद्द करा',newReg:'नवीन रुग्ण एंट्री',
- manageDocs:'डॉक्टर व वेळापत्रक व्यवस्थापन',addDoc:'डॉक्टर जोडा',editDoc:'डॉक्टर संपादित करा',deleteDoc:'डॉक्टर हटवा',
+ manageDocs:'डॉक्टर व वेळापत्रक व्यवस्थापन',addDoc:'डॉक्टर जोडा',
  weeklyPattern:'साप्ताहिक शिफ्टच्या वेळा',vacationBlock:'सुट्टी / व्हॅकेशन ब्लॉक',
  m_cash:'रोख',m_upi:'UPI',m_upi_qr:'UPI QR'
 }
@@ -137,18 +138,18 @@ const INITIAL_DOCTORS = [
     spec: {en:'General Physician', hi:'सामान्य चिकित्सक', mr:'सामान्य चिकित्सक'},
     upi: 'dr.patel@skyhospital', fee: 500, color: '#2563eb',
     weeklyPattern: {
-      days: [1, 2, 3, 4, 5, 6], // Mon-Sat
+      days: [1, 2, 3, 4, 5, 6],
       m: {on: true, s: '09:00', e: '13:00'},
       e: {on: true, s: '17:00', e: '20:00'}
     },
-    vacations: [] // array of {start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', reason: ''}
+    vacations: []
   },
   {
     id: 'sonone', name: 'Dr. Sonone', code: 'S',
     spec: {en:'Pediatrician', hi:'बाल रोग विशेषज्ञ', mr:'बालरोगतज्ज्ञ'},
     upi: 'dr.sonone@skyhospital', fee: 400, color: '#7c3aed',
     weeklyPattern: {
-      days: [1, 2, 3, 4, 5], // Mon-Fri
+      days: [1, 2, 3, 4, 5],
       m: {on: true, s: '09:30', e: '13:00'},
       e: {on: true, s: '17:00', e: '19:30'}
     },
@@ -159,7 +160,7 @@ const INITIAL_DOCTORS = [
     spec: {en:'Orthopedics', hi:'अस्थि रोग', mr:'अस्थिरोग तज्ज्ञ'},
     upi: 'dr.rathi@skyhospital', fee: 600, color: '#0891b2',
     weeklyPattern: {
-      days: [2, 4, 6], // Tue, Thu, Sat
+      days: [2, 4, 6],
       m: {on: true, s: '10:00', e: '13:00'},
       e: {on: true, s: '17:30', e: '20:00'}
     },
@@ -171,11 +172,40 @@ let S;
 let ui = {role:'patient', lang:'en', me:null, pStage:'scan', rTab:'queue', laneDoc:'all', schedDoc:'patel', period:'day'};
 let draft = newDraft();
 let docEditing = null;
-let pendingConfirm = null;
+let draggedPatientId = null;
 
 function newDraft(){ return {name:'', phone:'', age:'', gender:'Male', address:'', docId:null, date:today(), shift:'', slot:'', mode:'walkin', tried:false}; }
 const docById = id => S.doctors.find(d=>d.id===id);
 const t = (k,v) => tx(ui.lang,k,v);
+
+/* ───────────── Helper: Text-Only Color-Coded Status Badge ───────────── */
+function getStatusBadgeHTML(status){
+  let bgCls = '';
+  let label = '';
+
+  switch(status){
+    case 'waiting':
+      bgCls = 'bg-amber-100 text-amber-900 border-amber-300';
+      label = 'Waiting';
+      break;
+    case 'with':
+      bgCls = 'bg-emerald-100 text-emerald-900 border-emerald-300 font-extrabold';
+      label = 'With Doctor';
+      break;
+    case 'done':
+      bgCls = 'bg-slate-200 text-slate-700 border-slate-300';
+      label = 'Visit Complete';
+      break;
+    case 'cancelled':
+      bgCls = 'bg-rose-100 text-rose-800 border-rose-300';
+      label = 'Cancelled';
+      break;
+    default:
+      bgCls = 'bg-slate-100 text-slate-700 border-slate-200';
+      label = status;
+  }
+  return `<span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${bgCls}">${label}</span>`;
+}
 
 /* ───────────── Schedule & Vacation Logic ───────────── */
 function isDoctorOnVacation(doc, dateStr){
@@ -222,16 +252,8 @@ function slotsFor(docId, dateStr, k){
   return out;
 }
 
-function canWalkIn(docId){
-  const doc = docById(docId);
-  if(!doc) return false;
-  const dl = S.delays[docId];
-  if(dl && dl.full) return false;
-  return hoursOf(docId, today()).some(h => toMin(h.e) > nowMin());
-}
-
 function seedState(){
-  S = {v:3, doctors: JSON.parse(JSON.stringify(INITIAL_DOCTORS)), delays:{}, patients:[], notes:[]};
+  S = {v:5, doctors: JSON.parse(JSON.stringify(INITIAL_DOCTORS)), delays:{}, patients:[], notes:[]};
   const tdy = today(), now = Date.now();
   const mk = (name, phone, age, g, docId, slot, status, pay, method, extra)=>({
     id: uid(), name, phone, age, gender: g, address: 'Nashik', docId, date: tdy, slot, shift: slot ? (toMin(slot)<780?'m':'e') : '',
@@ -249,7 +271,7 @@ function seedState(){
 
 function loadState(){
   try{ const raw = ls.get(KEY); S = raw ? JSON.parse(raw) : null; }catch(e){ S = null; }
-  if(!S || S.v!==3) seedState();
+  if(!S || S.v!==5) seedState();
 }
 function save(){ try{ ls.set(KEY, JSON.stringify(S)); }catch(e){} render(); }
 function saveUI(){ ss.set(UIKEY, JSON.stringify({role:ui.role, lang:ui.lang, me:ui.me, pStage:ui.pStage, rTab:ui.rTab, laneDoc:ui.laneDoc, schedDoc:ui.schedDoc, period:ui.period})); }
@@ -292,7 +314,7 @@ function toast(msg,type){
   setTimeout(()=>{ el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3600);
 }
 function openDialog(html){ $('#dlg-body').innerHTML = html; const d=$('#dlg'); if(!d.open) d.showModal(); }
-function closeDialog(){ const d=$('#dlg'); if(d.open) d.close(); pendingConfirm=null; }
+function closeDialog(){ const d=$('#dlg'); if(d.open) d.close(); }
 
 /* ───────────── UI Styles ───────────── */
 const B = {
@@ -365,13 +387,11 @@ function scanHTML(){
    <button data-act="scan" class="${B.primary} mt-5 w-full py-3"><i class="fa-solid fa-camera"></i>${esc(t('scanBtn'))}</button>`;
 }
 
-/* ───────────── Single-Sheet New-Patient Registration Form ───────────── */
 function patientRegistrationFormHTML(){
   const d = draft;
   const doc = d.docId ? docById(d.docId) : null;
   const days = Array.from({length:7},(_,i)=>addDays(today(),i));
   
-  // Compact 7-day schedule preview generator
   let dayPreviewHTML = '';
   if(doc){
     dayPreviewHTML = `<div class="mt-2 grid grid-cols-7 gap-1">
@@ -406,7 +426,6 @@ function patientRegistrationFormHTML(){
       const sl = d.shift ? slotsFor(doc.id, d.date, d.shift) : [];
       
       slotBlock = `<div>
-        <!-- Mode Switcher: Walk-in vs Phone Appt -->
         <div class="mb-3 flex rounded-xl bg-slate-100 p-1">
           <button type="button" data-act="pickMode" data-mode="walkin" class="flex-1 py-1.5 text-xs font-bold rounded-lg ${d.mode==='walkin'?'bg-white text-blue-700 shadow':'text-slate-600'}"><i class="fa-solid fa-person-walking mr-1"></i>Walk-in Token</button>
           <button type="button" data-act="pickMode" data-mode="appointment" class="flex-1 py-1.5 text-xs font-bold rounded-lg ${d.mode==='appointment'?'bg-white text-blue-700 shadow':'text-slate-600'}"><i class="fa-solid fa-clock mr-1"></i>10-Min Appt</button>
@@ -430,7 +449,6 @@ function patientRegistrationFormHTML(){
     <p class="text-xs text-slate-500">${esc(t('regSub'))}</p>
     
     <form onsubmit="return false;" class="mt-4 space-y-3.5">
-      <!-- Patient Information -->
       <div>
         <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('fullName'))}</label>
         <input data-draft="name" autocomplete="name" value="${esc(d.name)}" placeholder="${esc(t('namePh'))}" class="${B.input}">
@@ -453,7 +471,6 @@ function patientRegistrationFormHTML(){
           <select data-draft="gender" class="${B.input}">
             <option value="Male" ${d.gender==='Male'?'selected':''}>${esc(t('male'))}</option>
             <option value="Female" ${d.gender==='Female'?'selected':''}>${esc(t('female'))}</option>
-            <option value="Other" ${d.gender==='Other'?'selected':''}>${esc(t('other'))}</option>
           </select>
         </div>
         <div>
@@ -464,7 +481,6 @@ function patientRegistrationFormHTML(){
 
       <hr class="border-slate-100">
 
-      <!-- Doctor & Slot Selection -->
       <div>
         <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('chooseDoctor'))}</label>
         <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
@@ -504,7 +520,7 @@ function ticketHTML(p){
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Token Status</span>
         <h3 class="text-base font-extrabold text-slate-900">${esc(p.name)}</h3>
       </div>
-      <span class="rounded-full px-3 py-1 text-xs font-bold ${p.status==='with'?'bg-emerald-100 text-emerald-700':p.status==='done'?'bg-slate-100 text-slate-600':'bg-amber-100 text-amber-700'}">${esc(t('st'+p.status.charAt(0).toUpperCase()+p.status.slice(1)))}</span>
+      ${getStatusBadgeHTML(p.status)}
     </div>
 
     <div class="rounded-2xl bg-gradient-to-br from-slate-900 to-blue-950 p-5 text-center text-white shadow-md">
@@ -535,54 +551,62 @@ function ticketHTML(p){
   </section>`;
 }
 
-/* ═════════════ RECEPTIONIST VIEW ═════════════ */
+/* ═════════════ RECEPTIONIST VIEW (DRAG & DROP PRIORITY REORDERING) ═════════════ */
 function receptionHTML(){
   const activePatients = S.patients.filter(p=>p.date===today() && p.status!=='cancelled');
   return `<div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
       <div>
         <h2 class="text-base font-extrabold text-slate-900">Front Desk OPD Queue Console</h2>
-        <p class="text-xs text-slate-500">${activePatients.length} Patients Active Today</p>
+        <p class="text-xs text-slate-500">${activePatients.length} Patients Active Today (Drag cards to reorder priority)</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
+        <button data-act="openEmergencyModal" class="inline-flex min-h-[36px] items-center gap-1 rounded-xl bg-rose-600 px-3 text-xs font-bold text-white hover:bg-rose-700 transition"><i class="fa-solid fa-triangle-exclamation"></i>Emergency Block</button>
         <button data-act="openQuickAdd" class="${B.primary} text-xs py-2"><i class="fa-solid fa-user-plus"></i>Quick Add Patient</button>
       </div>
     </div>
 
-    <!-- Active Queue List -->
-    <div class="space-y-2">
+    <!-- Active Queue List with Drag and Drop -->
+    <div class="space-y-3">
       ${S.doctors.map(doc => {
         const queue = laneAll(doc.id);
-        return `<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        const isDelayed = S.delays[doc.id] && S.delays[doc.id].mins > 0;
+        const isUnavailable = S.delays[doc.id] && S.delays[doc.id].full;
+
+        return `<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
           <div class="flex items-center justify-between border-b pb-2.5 border-slate-100">
             <div class="flex items-center gap-2">
-              <span class="grid h-6 w-6 place-items-center rounded-lg text-xs font-bold text-white" style="background:${doc.color}">${doc.code}</span>
-              <h3 class="font-bold text-sm text-slate-800">${esc(doc.name)}</h3>
+              <span class="grid h-7 w-7 place-items-center rounded-lg text-xs font-bold text-white" style="background:${doc.color}">${doc.code}</span>
+              <div>
+                <h3 class="font-bold text-sm text-slate-800">${esc(doc.name)}</h3>
+                ${isUnavailable ? `<span class="text-[10px] font-bold text-rose-600">Unavailable for the day</span>` : isDelayed ? `<span class="text-[10px] font-bold text-amber-600">Delayed ~${S.delays[doc.id].mins} mins</span>` : ''}
+              </div>
             </div>
             <span class="text-xs font-bold text-slate-500">${queue.filter(p=>p.status==='waiting').length} Waiting</span>
           </div>
 
-          <div class="mt-3 space-y-2">
-            ${queue.length ? queue.map((p, idx) => `
-              <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs">
-                <div class="flex items-center gap-2.5">
-                  <span class="font-black text-blue-700 text-sm">#${tok(p)}</span>
+          <!-- Draggable Container -->
+          <div class="space-y-2 queue-lane" data-docid="${doc.id}">
+            ${queue.length ? queue.map((p) => `
+              <div draggable="true" data-id="${p.id}" class="draggable-row flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-xs transition hover:border-blue-300">
+                <div class="flex items-center gap-3">
+                  <span class="font-black text-blue-700 text-sm min-w-[36px]">#${tok(p)}</span>
                   <div>
                     <p class="font-bold text-slate-800">${esc(p.name)} <span class="font-normal text-slate-500">(${esc(p.gender)}, ${esc(p.age||'—')})</span></p>
-                    <p class="text-[10px] text-slate-400">Mob: ${esc(p.phone)} ${p.slot ? '· Slot: '+fmt12(p.slot) : '· Walk-in'}</p>
+                    <p class="text-[10px] text-slate-500">Mob: ${esc(p.phone)} ${p.slot ? '· Slot: '+fmt12(p.slot) : '· Walk-in'}</p>
                   </div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <select data-chg="pStatus" data-id="${p.id}" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none">
-                    <option value="waiting" ${p.status==='waiting'?'selected':''}>⏳ Waiting</option>
-                    <option value="with" ${p.status==='with'?'selected':''}>🟢 With Doctor</option>
-                    <option value="done" ${p.status==='done'?'selected':''}>🏁 Done</option>
-                    <option value="cancelled" ${p.status==='cancelled'?'selected':''}>❌ Cancelled</option>
+                  <select data-chg="pStatus" data-id="${p.id}" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none cursor-pointer">
+                    <option value="waiting" ${p.status==='waiting'?'selected':''}>Waiting</option>
+                    <option value="with" ${p.status==='with'?'selected':''}>With Doctor</option>
+                    <option value="done" ${p.status==='done'?'selected':''}>Visit Complete</option>
+                    <option value="cancelled" ${p.status==='cancelled'?'selected':''}>Cancelled</option>
                   </select>
                 </div>
               </div>
-            `).join('') : '<p class="text-center text-xs text-slate-400 py-2">No patients in queue</p>'}
+            `).join('') : '<p class="text-center text-xs text-slate-400 py-3">No patients in queue. Drag patients here to assign.</p>'}
           </div>
         </div>`;
       }).join('')}
@@ -622,7 +646,6 @@ function doctorManagementHTML(){
             </div>
           </div>
 
-          <!-- Weekly Shift Pattern Card -->
           <div class="rounded-xl bg-slate-50 p-3 text-xs space-y-1.5 border border-slate-100">
             <p class="font-bold text-slate-700"><i class="fa-solid fa-calendar-week mr-1.5 text-blue-600"></i>Weekly Pattern: <span class="text-blue-700">${activeDaysText||'None'}</span></p>
             <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
@@ -631,7 +654,6 @@ function doctorManagementHTML(){
             </div>
           </div>
 
-          <!-- Time-Off / Vacation List -->
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-plane-departure text-rose-500 mr-1"></i>Vacations / Time-Off</span>
@@ -706,7 +728,6 @@ function openAddEditDoctorModal(docId){
 
       <hr class="border-slate-100">
 
-      <!-- Weekly Pattern Configurator -->
       <div>
         <label class="font-bold text-slate-800">Weekly Active Days</label>
         <div class="flex flex-wrap gap-1.5 mt-1.5">
@@ -719,11 +740,10 @@ function openAddEditDoctorModal(docId){
         </div>
       </div>
 
-      <!-- Shift Hours Configurator -->
       <div class="grid grid-cols-2 gap-2 pt-1">
         <div class="rounded-xl border border-slate-200 p-2.5 bg-slate-50 space-y-2">
           <label class="flex items-center justify-between font-bold text-slate-800">
-            <span>🌅 Morning Shift</span>
+            <span>Morning Shift</span>
             <input type="checkbox" id="m-on" ${p.m.on?'checked':''}>
           </label>
           <div class="grid grid-cols-2 gap-1">
@@ -734,7 +754,7 @@ function openAddEditDoctorModal(docId){
 
         <div class="rounded-xl border border-slate-200 p-2.5 bg-slate-50 space-y-2">
           <label class="flex items-center justify-between font-bold text-slate-800">
-            <span>🌇 Evening Shift</span>
+            <span>Evening Shift</span>
             <input type="checkbox" id="e-on" ${p.e.on?'checked':''}>
           </label>
           <div class="grid grid-cols-2 gap-1">
@@ -749,6 +769,35 @@ function openAddEditDoctorModal(docId){
         <button type="button" data-act="saveDoctor" class="${B.primary}">Save Doctor Profile</button>
       </div>
     </form>
+  </div>`);
+}
+
+function openEmergencyBlockModal(){
+  openDialog(`<div class="w-[min(92vw,22rem)] p-5 space-y-3 text-xs">
+    <div class="flex items-center justify-between border-b pb-2">
+      <h3 class="font-extrabold text-base text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Emergency OPD Block</h3>
+      <button onclick="closeDialog()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <div>
+      <label class="font-bold text-slate-700">Select Doctor</label>
+      <select id="emg-doc" class="${B.input} mt-1">
+        ${S.doctors.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}
+      </select>
+    </div>
+    <div>
+      <label class="font-bold text-slate-700">Delay Duration / Availability</label>
+      <select id="emg-dur" class="${B.input} mt-1">
+        <option value="30">30 Minutes Delay</option>
+        <option value="60">1 Hour Delay</option>
+        <option value="90">1.5 Hours Delay</option>
+        <option value="120">2 Hours Delay</option>
+        <option value="full">Unavailable for the Rest of Day</option>
+      </select>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" onclick="closeDialog()" class="${B.ghost}">Cancel</button>
+      <button type="button" data-act="saveEmergencyBlock" class="${B.danger}">Apply & Send SMS</button>
+    </div>
   </div>`);
 }
 
@@ -774,6 +823,69 @@ function openVacationModal(docId){
     </div>
   </div>`);
 }
+
+/* ───────────── Drag and Drop Priority Reordering Event Handlers ───────────── */
+document.addEventListener('dragstart', (e) => {
+  const row = e.target.closest('.draggable-row');
+  if(!row) return;
+  draggedPatientId = row.dataset.id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(()=>row.classList.add('opacity-40'), 0);
+});
+
+document.addEventListener('dragend', (e) => {
+  const row = e.target.closest('.draggable-row');
+  if(row) row.classList.remove('opacity-40');
+  document.querySelectorAll('.queue-lane > div').forEach(el => el.classList.remove('drag-over'));
+  draggedPatientId = null;
+});
+
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  const lane = e.target.closest('.queue-lane');
+  if(!lane) return;
+  const row = e.target.closest('.draggable-row');
+  document.querySelectorAll('.queue-lane > div').forEach(el => el.classList.remove('drag-over'));
+  if(row) row.classList.add('drag-over');
+});
+
+document.addEventListener('dragleave', (e) => {
+  const row = e.target.closest('.draggable-row');
+  if(row) row.classList.remove('drag-over');
+});
+
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const lane = e.target.closest('.queue-lane');
+  if(!lane || !draggedPatientId) return;
+
+  const targetRow = e.target.closest('.draggable-row');
+  const targetPatientId = targetRow ? targetRow.dataset.id : null;
+  const targetDocId = lane.dataset.docid;
+
+  const patIdx = S.patients.findIndex(p => p.id === draggedPatientId);
+  if(patIdx < 0) return;
+
+  // Update patient's assigned doctor if dragged across lanes
+  S.patients[patIdx].docId = targetDocId;
+
+  // Reorder inside the master patients array
+  const patientObj = S.patients.splice(patIdx, 1)[0];
+
+  if(targetPatientId && targetPatientId !== draggedPatientId){
+    const newTargetIdx = S.patients.findIndex(p => p.id === targetPatientId);
+    if(newTargetIdx >= 0){
+      S.patients.splice(newTargetIdx, 0, patientObj);
+    } else {
+      S.patients.push(patientObj);
+    }
+  } else {
+    S.patients.push(patientObj);
+  }
+
+  save();
+  toast('Queue priority adjusted successfully');
+});
 
 /* ───────────── Global Action Event Delegation ───────────── */
 document.addEventListener('click', (e) => {
@@ -814,7 +926,16 @@ document.addEventListener('click', (e) => {
   }
   if(act==='openQuickAdd'){ ui.role = 'patient'; ui.pStage = 'form'; draft = newDraft(); render(); }
   
-  /* Doctor Admin Actions */
+  if(act==='openEmergencyModal'){ openEmergencyBlockModal(); }
+  if(act==='saveEmergencyBlock'){
+    const docId = $('#emg-doc').value;
+    const dur = $('#emg-dur').value;
+    S.delays[docId] = dur === 'full' ? {full: true, mins: 0} : {full: false, mins: parseInt(dur)};
+    closeDialog();
+    save();
+    toast('Emergency alert broadcasted via SMS');
+  }
+
   if(act==='openAddDocModal'){ openAddEditDoctorModal(null); }
   if(act==='openEditDocModal'){ openAddEditDoctorModal(btn.dataset.id); }
   if(act==='deleteDoc'){
