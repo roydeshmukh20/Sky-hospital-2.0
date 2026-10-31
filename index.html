@@ -38,10 +38,10 @@
 (function(){
 'use strict';
 
-/* ───────────── Constants & storage ───────────── */
-const SLOT = 10;                       // minutes per appointment slot
-const KEY = 'sky_opd_v2';              // shared across tabs (hospital data)
-const UIKEY = 'sky_opd_ui';            // per tab (role, language, my token)
+/* ───────────── Constants & Storage ───────────── */
+const SLOT = 10;
+const KEY = 'sky_opd_v3';
+const UIKEY = 'sky_opd_ui_v3';
 const LOC = {en:'en-IN', hi:'hi-IN', mr:'mr-IN'};
 const mem = {};
 const store = (area) => ({
@@ -50,7 +50,7 @@ const store = (area) => ({
 });
 const ls = store('localStorage'), ss = store('sessionStorage');
 
-/* ───────────── Small helpers ───────────── */
+/* ───────────── Small Helpers ───────────── */
 const $ = (s,r=document)=>r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pad = n => String(n).padStart(2,'0');
@@ -63,167 +63,196 @@ const fromMin = m => `${pad(Math.floor(m/60)%24)}:${pad(m%60)}`;
 const fmt12 = s => { const m = typeof s==='number'?s:toMin(s); const h=Math.floor(m/60)%24; return `${h%12||12}:${pad(m%60)} ${h<12?'AM':'PM'}`; };
 const money = n => '₹' + Math.round(n).toLocaleString('en-IN');
 const uid = () => Math.random().toString(36).slice(2,8) + Date.now().toString(36).slice(-3);
-const hash = s => [...s].reduce((a,c)=>(a*31+c.charCodeAt(0))%2147483647,7);
 const baseUrl = () => location.href.split(/[?#]/)[0];
-const dayLabel = (d,lang,opts) => new Date(d+'T00:00:00').toLocaleDateString(LOC[lang]||'en-IN', opts||{weekday:'short',day:'numeric',month:'short'});
 
-/* ───────────── Translations (patient-facing) ───────────── */
+/* ───────────── Translations ───────────── */
 const T = {
 en:{
- navPatient:'Patient',navReception:'Reception',navAdmin:'Admin',brandSub:'Digital OPD · Token & UPI',
- scanTitle:'Welcome to Sky Hospital',scanSub:'Scan the front-desk QR code to join today’s OPD queue.',scanTap:'Tap to scan',scanBtn:'Scan QR code',scanDemo:'Demo: tapping simulates a camera scan.',
- regTitle:'Register for OPD',regSub:'Takes under a minute. No app install needed.',
- fullName:'Full name',namePh:'e.g. Rajesh Kumar',mobile:'Mobile number',mobileHint:'Token updates are sent by SMS and WhatsApp.',
- gender:'Gender',male:'Male',female:'Female',other:'Other',
- chooseDoctor:'Choose doctor',chooseDay:'Choose day',shift:'Shift',morning:'Morning OPD',evening:'Evening OPD',chooseSlot:'Pick a 10-minute slot',
- walkIn:'Walk-in · next available',walkInHint:'Join today’s queue right now',noSlots:'No slots in this shift.',noOpd:'No OPD',todayLbl:'Today',
- delayed:'Delayed ~{m} min',unavailable:'Unavailable today',feeLbl:'Consultation fee',
- getToken:'Get my token',bookSlot:'Book {time} slot',
- errName:'Please enter your name.',errPhone:'Enter a 10-digit mobile number.',errDoctor:'Please choose a doctor.',errSlot:'Pick a slot or walk-in.',
- tokenYour:'Your token',walkInQ:'Walk-in queue',slotAt:'Slot {time}',
- stWaiting:'Waiting',stWith:'With doctor',stDone:'Visit complete',stCancelled:'Cancelled',stBooked:'Booked',
- ahead:'{n} ahead of you',aheadNone:'You’re next',nowServing:'Now serving',estWait:'Estimated wait',min:'min',expected:'Expected around {time}',
- yourTurn:'It’s your turn — please go to the doctor’s room.',docUnavail:'{doc} is unavailable for the rest of the day.',delayBanner:'Emergency delay: {doc} is running ~{m} min late.',
- feeTitle:'Consultation fee',due:'Unpaid',claimed:'Awaiting verification',paid:'Paid',paidVia:'Paid via {method}',
- payTitle:'Pay by UPI',payTo:'Pay ₹{amt} to {doc}',scanToPay:'Scan with any UPI app',upiId:'UPI ID',openUpi:'Open UPI app',iPaid:'I’ve paid',payNote:'Reception will verify and confirm your payment.',payDone:'Payment received. Thank you!',
- updates:'Updates',noUpdates:'No updates yet.',sms:'SMS',wa:'WhatsApp',
- saveWa:'Share on WhatsApp',cancelTok:'Cancel token',cancelAsk:'Cancel your token?',newReg:'New registration',yes:'Yes, cancel',keep:'Keep token',rescan:'Start over',
- doneTitle:'Visit complete',doneSub:'Thank you for visiting Sky Hospital.',cancelledTitle:'Token cancelled',cancelledSub:'You can register again anytime.',
- m_cash:'Cash',m_upi:'UPI',m_upi_qr:'UPI QR',
- n_reg:'Sky Hospital: Token {token} confirmed with {doc}. Est. wait ~{wait} min. Track: {link}',
- n_book:'Sky Hospital: Appointment booked with {doc} on {date} at {time}. {link}',
- n_next:'Almost your turn! Token {token} — only 1 patient ahead of you.',
- n_called:'Token {token}: please proceed to {doc}’s room now.',
- n_delay:'Emergency update: {doc} is delayed by about {m} min. Your new est. wait is ~{wait} min. Sorry for the inconvenience.',
- n_full:'Emergency update: {doc} is unavailable for the rest of the day. We will help you reschedule.',
- n_clear:'Update: {doc} is back on schedule. Est. wait ~{wait} min.',
- n_paid:'Payment of ₹{amt} received via {method}. Thank you!',
- n_cancel:'Token {token} has been cancelled.'
+ navPatient:'Patient',navReception:'Reception',navAdmin:'Admin',brandSub:'Digital OPD · Queue & Billing',
+ scanTitle:'Welcome to Sky Hospital',scanSub:'Scan the front-desk QR code to join today’s OPD queue.',scanTap:'Tap to scan',scanBtn:'Scan QR code',scanDemo:'Demo: tapping simulates camera scan.',
+ regTitle:'New Patient OPD Registration',regSub:'Quick registration & appointment booking.',
+ fullName:'Full Name *',namePh:'e.g. Rajesh Kumar',mobile:'Mobile Number *',mobileHint:'Token updates are sent by SMS/WhatsApp.',
+ ageOrDob:'Age / Date of Birth *',agePh:'e.g. 34 or 1990-05-15',gender:'Gender *',male:'Male',female:'Female',other:'Other',address:'Address (Optional)',addPh:'Area / City',
+ chooseDoctor:'Select Doctor *',chooseDay:'Select Day',shift:'Shift',morning:'Morning OPD',evening:'Evening OPD',chooseSlot:'Select Appointment Slot',
+ walkIn:'Walk-in · Immediate Token',walkInHint:'Join active queue right now',noSlots:'No slots in this shift.',noOpd:'No OPD / On Leave',todayLbl:'Today',
+ delayed:'Delayed ~{m} min',unavailable:'Unavailable today',vacation:'Doctor on Time-off / Vacation',feeLbl:'Consultation fee',
+ getToken:'Get Walk-in Token',bookSlot:'Book {time} Slot',
+ errName:'Please enter full name.',errPhone:'Enter a valid 10-digit mobile number.',errAge:'Enter age or DOB.',errDoctor:'Please select a doctor.',errSlot:'Pick a time slot or walk-in.',
+ tokenYour:'Your Token',walkInQ:'Walk-in queue',slotAt:'Slot {time}',
+ stWaiting:'Waiting',stWith:'With Doctor',stDone:'Visit Complete',stCancelled:'Cancelled',
+ ahead:'{n} ahead of you',aheadNone:'You’re next',nowServing:'Now serving',estWait:'Est. Wait',min:'min',
+ feeTitle:'Consultation Fee',due:'Unpaid',paid:'Paid',
+ saveWa:'Share on WhatsApp',cancelTok:'Cancel Token',newReg:'New Patient Entry',
+ manageDocs:'Manage Doctors & Timings',addDoc:'Add Doctor',editDoc:'Edit Doctor',deleteDoc:'Delete Doctor',
+ weeklyPattern:'Weekly Shift Timings',vacationBlock:'Time-Off / Vacation Blocks',
+ m_cash:'Cash',m_upi:'UPI',m_upi_qr:'UPI QR'
 },
 hi:{
- navPatient:'मरीज़',navReception:'रिसेप्शन',navAdmin:'एडमिन',brandSub:'डिजिटल OPD · टोकन व UPI',
- scanTitle:'स्काय हॉस्पिटल में आपका स्वागत है',scanSub:'आज की OPD कतार में जुड़ने के लिए फ्रंट-डेस्क का QR कोड स्कैन करें।',scanTap:'स्कैन के लिए टैप करें',scanBtn:'QR कोड स्कैन करें',scanDemo:'डेमो: टैप करने पर कैमरा स्कैन का अनुकरण होता है।',
- regTitle:'OPD पंजीकरण',regSub:'एक मिनट से कम समय। ऐप इंस्टॉल की ज़रूरत नहीं।',
- fullName:'पूरा नाम',namePh:'जैसे राजेश कुमार',mobile:'मोबाइल नंबर',mobileHint:'टोकन अपडेट SMS और WhatsApp पर भेजे जाएंगे।',
- gender:'लिंग',male:'पुरुष',female:'महिला',other:'अन्य',
- chooseDoctor:'डॉक्टर चुनें',chooseDay:'दिन चुनें',shift:'शिफ्ट',morning:'सुबह की OPD',evening:'शाम की OPD',chooseSlot:'10 मिनट का स्लॉट चुनें',
- walkIn:'वॉक-इन · अगला उपलब्ध',walkInHint:'अभी आज की कतार में जुड़ें',noSlots:'इस शिफ्ट में कोई स्लॉट नहीं।',noOpd:'OPD नहीं',todayLbl:'आज',
- delayed:'~{m} मिनट देरी',unavailable:'आज उपलब्ध नहीं',feeLbl:'परामर्श शुल्क',
- getToken:'मेरा टोकन पाएं',bookSlot:'{time} का स्लॉट बुक करें',
- errName:'कृपया अपना नाम लिखें।',errPhone:'10 अंकों का मोबाइल नंबर लिखें।',errDoctor:'कृपया डॉक्टर चुनें।',errSlot:'कृपया स्लॉट या वॉक-इन चुनें।',
+ navPatient:'मरीज़',navReception:'रिसेप्शन',navAdmin:'एडमिन',brandSub:'डिजिटल OPD · टोकन व बिलिंग',
+ scanTitle:'स्काय हॉस्पिटल में आपका स्वागत है',scanSub:'आज की OPD कतार में जुड़ने के लिए QR कोड स्कैन करें।',scanTap:'स्कैन के लिए टैप करें',scanBtn:'QR कोड स्कैन करें',scanDemo:'डेमो: टैप करने पर कैमरा स्कैन का अनुकरण होता है।',
+ regTitle:'नया मरीज़ OPD पंजीकरण',regSub:'त्वरित पंजीकरण और अपॉइंटमेंट बुकिंग।',
+ fullName:'पूरा नाम *',namePh:'जैसे राजेश कुमार',mobile:'मोबाइल नंबर *',mobileHint:'टोकन अपडेट SMS और WhatsApp पर भेजे जाएंगे।',
+ ageOrDob:'उम्र / जन्म तिथि *',agePh:'जैसे 34 या 1990-05-15',gender:'लिंग *',male:'पुरुष',female:'महिला',other:'अन्य',address:'पता (वैकल्पिक)',addPh:'क्षेत्र / शहर',
+ chooseDoctor:'डॉक्टर चुनें *',chooseDay:'दिन चुनें',shift:'शिफ्ट',morning:'सुबह की OPD',evening:'शाम की OPD',chooseSlot:'अपॉइंटमेंट स्लॉट चुनें',
+ walkIn:'वॉक-इन · तत्काल टोकन',walkInHint:'अभी ओपीडी कतार में जुड़ें',noSlots:'इस शिफ्ट में कोई स्लॉट नहीं।',noOpd:'OPD नहीं / छुट्टी पर',todayLbl:'आज',
+ delayed:'~{m} मिनट देरी',unavailable:'आज उपलब्ध नहीं',vacation:'डॉक्टर छुट्टी पर हैं',feeLbl:'परामर्श शुल्क',
+ getToken:'वॉक-इन टोकन लें',bookSlot:'{time} का स्लॉट बुक करें',
+ errName:'कृपया पूरा नाम लिखें।',errPhone:'10 अंकों का मोबाइल नंबर लिखें।',errAge:'उम्र या जन्म तिथि लिखें।',errDoctor:'कृपया डॉक्टर चुनें।',errSlot:'कृपया स्लॉट या वॉक-इन चुनें।',
  tokenYour:'आपका टोकन',walkInQ:'वॉक-इन कतार',slotAt:'स्लॉट {time}',
- stWaiting:'प्रतीक्षा में',stWith:'डॉक्टर के पास',stDone:'विज़िट पूरी',stCancelled:'रद्द',stBooked:'बुक्ड',
- ahead:'आपसे आगे {n}',aheadNone:'अगला नंबर आपका है',nowServing:'अभी चल रहा',estWait:'अनुमानित प्रतीक्षा',min:'मिनट',expected:'लगभग {time} तक',
- yourTurn:'आपकी बारी है — कृपया डॉक्टर के कक्ष में जाएं।',docUnavail:'{doc} आज शेष दिन उपलब्ध नहीं हैं।',delayBanner:'आपातकालीन देरी: {doc} लगभग {m} मिनट देरी से हैं।',
- feeTitle:'परामर्श शुल्क',due:'बकाया',claimed:'सत्यापन की प्रतीक्षा',paid:'भुगतान हुआ',paidVia:'{method} से भुगतान',
- payTitle:'UPI से भुगतान करें',payTo:'{doc} को ₹{amt} भेजें',scanToPay:'किसी भी UPI ऐप से स्कैन करें',upiId:'UPI ID',openUpi:'UPI ऐप खोलें',iPaid:'मैंने भुगतान कर दिया',payNote:'रिसेप्शन आपके भुगतान की पुष्टि करेगा।',payDone:'भुगतान प्राप्त हुआ। धन्यवाद!',
- updates:'अपडेट',noUpdates:'अभी कोई अपडेट नहीं।',sms:'SMS',wa:'WhatsApp',
- saveWa:'WhatsApp पर शेयर करें',cancelTok:'टोकन रद्द करें',cancelAsk:'क्या आप अपना टोकन रद्द करना चाहते हैं?',newReg:'नया पंजीकरण',yes:'हाँ, रद्द करें',keep:'टोकन रखें',rescan:'फिर से शुरू करें',
- doneTitle:'विज़िट पूरी हुई',doneSub:'स्काय हॉस्पिटल आने के लिए धन्यवाद।',cancelledTitle:'टोकन रद्द हुआ',cancelledSub:'आप कभी भी फिर से पंजीकरण कर सकते हैं।',
- m_cash:'नकद',m_upi:'UPI',m_upi_qr:'UPI QR',
- n_reg:'स्काय हॉस्पिटल: {doc} के साथ टोकन {token} पक्का। अनुमानित प्रतीक्षा ~{wait} मिनट। ट्रैक करें: {link}',
- n_book:'स्काय हॉस्पिटल: {doc} के साथ {date} को {time} का अपॉइंटमेंट बुक हुआ। {link}',
- n_next:'लगभग आपकी बारी! टोकन {token} — आपसे आगे सिर्फ 1 मरीज़ है।',
- n_called:'टोकन {token}: कृपया अभी {doc} के कक्ष में जाएं।',
- n_delay:'आपातकालीन सूचना: {doc} लगभग {m} मिनट देरी से हैं। आपकी नई अनुमानित प्रतीक्षा ~{wait} मिनट। असुविधा के लिए खेद है।',
- n_full:'आपातकालीन सूचना: {doc} आज शेष दिन उपलब्ध नहीं हैं। हम आपका अपॉइंटमेंट बदलने में मदद करेंगे।',
- n_clear:'सूचना: {doc} का समय सामान्य हो गया है। अनुमानित प्रतीक्षा ~{wait} मिनट।',
- n_paid:'₹{amt} का भुगतान {method} से प्राप्त हुआ। धन्यवाद!',
- n_cancel:'टोकन {token} रद्द कर दिया गया है।'
+ stWaiting:'प्रतीक्षा में',stWith:'डॉक्टर के पास',stDone:'विज़िट पूरी',stCancelled:'रद्द',
+ ahead:'आपसे आगे {n}',aheadNone:'अगला नंबर आपका है',nowServing:'अभी चल रहा',estWait:'अनुमानित प्रतीक्षा',min:'मिनट',
+ feeTitle:'परामर्श शुल्क',due:'बकाया',paid:'भुगतान हुआ',
+ saveWa:'WhatsApp पर शेयर करें',cancelTok:'टोकन रद्द करें',newReg:'नया मरीज़ एंट्री',
+ manageDocs:'डॉक्टर और समय प्रबंधन',addDoc:'डॉक्टर जोड़ें',editDoc:'डॉक्टर संपादन',deleteDoc:'डॉक्टर हटाएं',
+ weeklyPattern:'साप्ताहिक शिफ्ट का समय',vacationBlock:'छुट्टी / वैकेशन ब्लॉक',
+ m_cash:'नकद',m_upi:'UPI',m_upi_qr:'UPI QR'
 },
 mr:{
- navPatient:'रुग्ण',navReception:'रिसेप्शन',navAdmin:'ॲडमिन',brandSub:'डिजिटल OPD · टोकन व UPI',
- scanTitle:'स्काय हॉस्पिटलमध्ये आपले स्वागत आहे',scanSub:'आजच्या OPD रांगेत सामील होण्यासाठी फ्रंट-डेस्कचा QR कोड स्कॅन करा.',scanTap:'स्कॅन करण्यासाठी टॅप करा',scanBtn:'QR कोड स्कॅन करा',scanDemo:'डेमो: टॅप केल्यावर कॅमेरा स्कॅनची नक्कल होते.',
- regTitle:'OPD नोंदणी',regSub:'एका मिनिटापेक्षा कमी वेळ. ॲप इन्स्टॉल करण्याची गरज नाही.',
- fullName:'पूर्ण नाव',namePh:'उदा. राजेश कुमार',mobile:'मोबाईल नंबर',mobileHint:'टोकन अपडेट SMS आणि WhatsApp वर पाठवले जातील.',
- gender:'लिंग',male:'पुरुष',female:'महिला',other:'इतर',
- chooseDoctor:'डॉक्टर निवडा',chooseDay:'दिवस निवडा',shift:'शिफ्ट',morning:'सकाळची OPD',evening:'संध्याकाळची OPD',chooseSlot:'१० मिनिटांचा स्लॉट निवडा',
- walkIn:'वॉक-इन · पुढील उपलब्ध',walkInHint:'आत्ताच आजच्या रांगेत सामील व्हा',noSlots:'या शिफ्टमध्ये स्लॉट नाहीत.',noOpd:'OPD नाही',todayLbl:'आज',
- delayed:'~{m} मिनिटे उशीर',unavailable:'आज उपलब्ध नाहीत',feeLbl:'तपासणी फी',
- getToken:'माझा टोकन मिळवा',bookSlot:'{time} चा स्लॉट बुक करा',
- errName:'कृपया नाव लिहा.',errPhone:'१० अंकी मोबाईल नंबर लिहा.',errDoctor:'कृपया डॉक्टर निवडा.',errSlot:'कृपया स्लॉट किंवा वॉक-इन निवडा.',
+ navPatient:'रुग्ण',navReception:'रिसेप्शन',navAdmin:'ॲडमिन',brandSub:'डिजिटल OPD · टोकन व बिलिंग',
+ scanTitle:'स्काय हॉस्पिटलमध्ये आपले स्वागत आहे',scanSub:'आजच्या OPD रांगेत सामील होण्यासाठी QR कोड स्कॅन करा.',scanTap:'स्कॅन करण्यासाठी टॅप करा',scanBtn:'QR कोड स्कॅन करा',scanDemo:'डेमो: टॅप केल्यावर कॅमेरा स्कॅनची नक्कल होते.',
+ regTitle:'नवीन रुग्ण OPD नोंदणी',regSub:'जलद नोंदणी आणि अपॉइंटमेंट बुकिंग.',
+ fullName:'पूर्ण नाव *',namePh:'उदा. राजेश कुमार',mobile:'मोबाईल नंबर *',mobileHint:'टोकन अपडेट SMS आणि WhatsApp वर पाठवले जातील.',
+ ageOrDob:'वय / जन्मतारीख *',agePh:'उदा. 34 किंवा 1990-05-15',gender:'लिंग *',male:'पुरुष',female:'महिला',other:'इतर',address:'पत्ता (पर्यायी)',addPh:'भाग / शहर',
+ chooseDoctor:'डॉक्टर निवडा *',chooseDay:'दिवस निवडा',shift:'शिफ्ट',morning:'सकाळची OPD',evening:'संध्याकाळची OPD',chooseSlot:'अपॉइंटमेंट स्लॉट निवडा',
+ walkIn:'वॉक-इन · तात्काळ टोकन',walkInHint:'आत्ताच रांगेत सामील व्हा',noSlots:'या शिफ्टमध्ये स्लॉट नाहीत.',noOpd:'OPD नाही / सुट्टीवर',todayLbl:'आज',
+ delayed:'~{m} मिनिटे उशीर',unavailable:'आज उपलब्ध नाहीत',vacation:'डॉक्टर सुट्टीवर आहेत',feeLbl:'तपासणी फी',
+ getToken:'वॉक-इन टोकन घ्या',bookSlot:'{time} चा स्लॉट बुक करा',
+ errName:'कृपया नाव लिहा.',errPhone:'१० अंकी मोबाईल नंबर लिहा.',errAge:'वय किंवा जन्मतारीख लिहा.',errDoctor:'कृपया डॉक्टर निवडा.',errSlot:'कृपया स्लॉट किंवा वॉक-इन निवडा.',
  tokenYour:'तुमचा टोकन',walkInQ:'वॉक-इन रांग',slotAt:'स्लॉट {time}',
- stWaiting:'प्रतीक्षेत',stWith:'डॉक्टरांकडे',stDone:'तपासणी पूर्ण',stCancelled:'रद्द',stBooked:'बुक केले',
- ahead:'तुमच्या पुढे {n}',aheadNone:'पुढचा नंबर तुमचा आहे',nowServing:'सध्या सुरू',estWait:'अंदाजे प्रतीक्षा',min:'मिनिटे',expected:'साधारण {time} पर्यंत',
- yourTurn:'तुमची पाळी आहे — कृपया डॉक्टरांच्या खोलीत जा.',docUnavail:'{doc} आज उर्वरित दिवस उपलब्ध नाहीत.',delayBanner:'आपत्कालीन विलंब: {doc} सुमारे {m} मिनिटे उशिराने आहेत.',
- feeTitle:'तपासणी फी',due:'बाकी',claimed:'पडताळणीची प्रतीक्षा',paid:'भरले',paidVia:'{method} द्वारे भरले',
- payTitle:'UPI द्वारे पैसे भरा',payTo:'{doc} यांना ₹{amt} पाठवा',scanToPay:'कोणत्याही UPI ॲपने स्कॅन करा',upiId:'UPI ID',openUpi:'UPI ॲप उघडा',iPaid:'मी पैसे भरले',payNote:'रिसेप्शन तुमच्या पेमेंटची खात्री करेल.',payDone:'पेमेंट मिळाले. धन्यवाद!',
- updates:'अपडेट्स',noUpdates:'अजून अपडेट्स नाहीत.',sms:'SMS',wa:'WhatsApp',
- saveWa:'WhatsApp वर शेअर करा',cancelTok:'टोकन रद्द करा',cancelAsk:'तुम्हाला तुमचा टोकन रद्द करायचा आहे का?',newReg:'नवीन नोंदणी',yes:'हो, रद्द करा',keep:'टोकन ठेवा',rescan:'पुन्हा सुरू करा',
- doneTitle:'तपासणी पूर्ण झाली',doneSub:'स्काय हॉस्पिटलला भेट दिल्याबद्दल धन्यवाद.',cancelledTitle:'टोकन रद्द झाला',cancelledSub:'तुम्ही केव्हाही पुन्हा नोंदणी करू शकता.',
- m_cash:'रोख',m_upi:'UPI',m_upi_qr:'UPI QR',
- n_reg:'स्काय हॉस्पिटल: {doc} यांच्याकडे टोकन {token} निश्चित. अंदाजे प्रतीक्षा ~{wait} मिनिटे. ट्रॅक करा: {link}',
- n_book:'स्काय हॉस्पिटल: {doc} यांच्याकडे {date} रोजी {time} ची अपॉइंटमेंट बुक झाली. {link}',
- n_next:'जवळजवळ तुमची पाळी! टोकन {token} — तुमच्या पुढे फक्त १ रुग्ण आहे.',
- n_called:'टोकन {token}: कृपया आता {doc} यांच्या खोलीत जा.',
- n_delay:'आपत्कालीन सूचना: {doc} सुमारे {m} मिनिटे उशिराने आहेत. तुमची नवी अंदाजे प्रतीक्षा ~{wait} मिनिटे. गैरसोयीबद्दल क्षमस्व.',
- n_full:'आपत्कालीन सूचना: {doc} आज उर्वरित दिवस उपलब्ध नाहीत. आम्ही तुमची अपॉइंटमेंट बदलण्यास मदत करू.',
- n_clear:'सूचना: {doc} यांचे वेळापत्रक पूर्ववत झाले आहे. अंदाजे प्रतीक्षा ~{wait} मिनिटे.',
- n_paid:'₹{amt} चे पेमेंट {method} द्वारे मिळाले. धन्यवाद!',
- n_cancel:'टोकन {token} रद्द करण्यात आला आहे.'
-}};
+ stWaiting:'प्रतीक्षेत',stWith:'डॉक्टरांकडे',stDone:'तपासणी पूर्ण',stCancelled:'रद्द',
+ ahead:'तुमच्या पुढे {n}',aheadNone:'पुढचा नंबर तुमचा आहे',nowServing:'सध्या सुरू',estWait:'अंदाजे प्रतीक्षा',min:'मिनिटे',
+ feeTitle:'तपासणी फी',due:'बाकी',paid:'भरले',
+ saveWa:'WhatsApp वर शेअर करा',cancelTok:'टोकन रद्द करा',newReg:'नवीन रुग्ण एंट्री',
+ manageDocs:'डॉक्टर व वेळापत्रक व्यवस्थापन',addDoc:'डॉक्टर जोडा',editDoc:'डॉक्टर संपादित करा',deleteDoc:'डॉक्टर हटवा',
+ weeklyPattern:'साप्ताहिक शिफ्टच्या वेळा',vacationBlock:'सुट्टी / व्हॅकेशन ब्लॉक',
+ m_cash:'रोख',m_upi:'UPI',m_upi_qr:'UPI QR'
+}
+};
 const tx = (lang,key,v) => { let s = (T[lang]&&T[lang][key]) ?? T.en[key] ?? key; if(v) for(const k in v) s = s.split('{'+k+'}').join(v[k]); return s; };
 
-/* ───────────── State ───────────── */
-const DOCS = [
-  {id:'patel', name:'Dr. Patel', code:'P', spec:{en:'General Physician',hi:'सामान्य चिकित्सक',mr:'सामान्य चिकित्सक'}, upi:'dr.patel@skyhospital', fee:500, color:'#2563eb', base:20},
-  {id:'sonone',name:'Dr. Sonone',code:'S', spec:{en:'Pediatrician',hi:'बाल रोग विशेषज्ञ',mr:'बालरोगतज्ज्ञ'}, upi:'dr.sonone@skyhospital', fee:400, color:'#7c3aed', base:15},
-  {id:'rathi', name:'Dr. Rathi', code:'R', spec:{en:'Orthopedics',hi:'अस्थि रोग',mr:'अस्थिरोग तज्ज्ञ'}, upi:'dr.rathi@skyhospital', fee:600, color:'#0891b2', base:10}
+/* ───────────── Default Seed State ───────────── */
+const INITIAL_DOCTORS = [
+  {
+    id: 'patel', name: 'Dr. Patel', code: 'P',
+    spec: {en:'General Physician', hi:'सामान्य चिकित्सक', mr:'सामान्य चिकित्सक'},
+    upi: 'dr.patel@skyhospital', fee: 500, color: '#2563eb',
+    weeklyPattern: {
+      days: [1, 2, 3, 4, 5, 6], // Mon-Sat
+      m: {on: true, s: '09:00', e: '13:00'},
+      e: {on: true, s: '17:00', e: '20:00'}
+    },
+    vacations: [] // array of {start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', reason: ''}
+  },
+  {
+    id: 'sonone', name: 'Dr. Sonone', code: 'S',
+    spec: {en:'Pediatrician', hi:'बाल रोग विशेषज्ञ', mr:'बालरोगतज्ज्ञ'},
+    upi: 'dr.sonone@skyhospital', fee: 400, color: '#7c3aed',
+    weeklyPattern: {
+      days: [1, 2, 3, 4, 5], // Mon-Fri
+      m: {on: true, s: '09:30', e: '13:00'},
+      e: {on: true, s: '17:00', e: '19:30'}
+    },
+    vacations: []
+  },
+  {
+    id: 'rathi', name: 'Dr. Rathi', code: 'R',
+    spec: {en:'Orthopedics', hi:'अस्थि रोग', mr:'अस्थिरोग तज्ज्ञ'},
+    upi: 'dr.rathi@skyhospital', fee: 600, color: '#0891b2',
+    weeklyPattern: {
+      days: [2, 4, 6], // Tue, Thu, Sat
+      m: {on: true, s: '10:00', e: '13:00'},
+      e: {on: true, s: '17:30', e: '20:00'}
+    },
+    vacations: []
+  }
 ];
-let S;                                   // hospital data (localStorage)
+
+let S;
 let ui = {role:'patient', lang:'en', me:null, pStage:'scan', rTab:'queue', laneDoc:'all', schedDoc:'patel', period:'day'};
 let draft = newDraft();
-let drag = null, pendingRender = false, pendingConfirm = null;
+let docEditing = null;
+let pendingConfirm = null;
 
-function newDraft(){ return {name:'',phone:'',gender:'Male',docId:null,date:today(),shift:'',slot:'',tried:false}; }
+function newDraft(){ return {name:'', phone:'', age:'', gender:'Male', address:'', docId:null, date:today(), shift:'', slot:'', mode:'walkin', tried:false}; }
 const docById = id => S.doctors.find(d=>d.id===id);
-const L = () => ui.lang;
 const t = (k,v) => tx(ui.lang,k,v);
 
-function defaultShift(docId, dateStr){
-  const dow = new Date(dateStr+'T00:00:00').getDay();     // 0 = Sunday
-  const off = {on:false,s:'09:00',e:'13:00'};
-  const m = (s,e)=>({on:true,s,e});
-  let morning = off, evening = {on:false,s:'17:00',e:'20:00'};
-  if(docId==='patel'){ morning = dow===0 ? m('10:00','12:00') : m('09:00','13:00'); if(dow!==0) evening = m('17:00','20:00'); }
-  if(docId==='sonone'){ if(dow!==0) morning = m('09:30','13:00'); if([1,3,5].includes(dow)) evening = m('17:00','19:30'); }
-  if(docId==='rathi'){ if([2,4,6].includes(dow)) morning = m('10:00','13:00'); if(dow>=1&&dow<=5) evening = m('17:30','20:00'); }
-  return {m:{...morning}, e:{...evening}};
+/* ───────────── Schedule & Vacation Logic ───────────── */
+function isDoctorOnVacation(doc, dateStr){
+  if(!doc.vacations || !doc.vacations.length) return false;
+  return doc.vacations.some(v => dateStr >= v.start && dateStr <= v.end);
 }
-function ensureSchedule(){
-  S.sched = S.sched || {};
-  S.doctors.forEach(d=>{
-    S.sched[d.id] = S.sched[d.id] || {};
-    for(let i=0;i<7;i++){ const ds=addDays(today(),i); if(!S.sched[d.id][ds]) S.sched[d.id][ds]=defaultShift(d.id,ds); }
-    Object.keys(S.sched[d.id]).forEach(k=>{ if(k<addDays(today(),-1)) delete S.sched[d.id][k]; });
-  });
+
+function getShiftForDate(doc, dateStr){
+  if(isDoctorOnVacation(doc, dateStr)){
+    return {m:{on:false}, e:{on:false}, vacation:true};
+  }
+  const dow = new Date(dateStr+'T00:00:00').getDay();
+  const activeDays = doc.weeklyPattern ? doc.weeklyPattern.days : [1,2,3,4,5,6];
+  if(!activeDays.includes(dow)){
+    return {m:{on:false}, e:{on:false}, vacation:false};
+  }
+  return {
+    m: doc.weeklyPattern ? {...doc.weeklyPattern.m} : {on:true, s:'09:00', e:'13:00'},
+    e: doc.weeklyPattern ? {...doc.weeklyPattern.e} : {on:true, s:'17:00', e:'20:00'},
+    vacation: false
+  };
 }
+
+function hoursOf(docId, dateStr){
+  const doc = docById(docId);
+  if(!doc) return [];
+  const s = getShiftForDate(doc, dateStr);
+  if(s.vacation) return [];
+  return ['m','e'].filter(k=>s[k]&&s[k].on).map(k=>({k, s:s[k].s, e:s[k].e}));
+}
+
+function slotsFor(docId, dateStr, k){
+  const doc = docById(docId);
+  if(!doc) return [];
+  const s = getShiftForDate(doc, dateStr);
+  if(!s[k] || !s[k].on) return [];
+  const out = [], end = toMin(s[k].e);
+  for(let m = toMin(s[k].s); m + SLOT <= end; m += SLOT){
+    const t0 = fromMin(m);
+    const booked = S.patients.some(p => p.docId === docId && p.date === dateStr && p.slot === t0 && p.status !== 'cancelled');
+    const past = dateStr === today() && m <= nowMin();
+    out.push({t: t0, state: booked ? 'booked' : past ? 'past' : 'free'});
+  }
+  return out;
+}
+
+function canWalkIn(docId){
+  const doc = docById(docId);
+  if(!doc) return false;
+  const dl = S.delays[docId];
+  if(dl && dl.full) return false;
+  return hoursOf(docId, today()).some(h => toMin(h.e) > nowMin());
+}
+
 function seedState(){
-  const doctors = DOCS.map(d=>({...d}));
-  S = {v:2, doctors, sched:{}, delays:{}, patients:[], notes:[]};
-  ensureSchedule();
+  S = {v:3, doctors: JSON.parse(JSON.stringify(INITIAL_DOCTORS)), delays:{}, patients:[], notes:[]};
   const tdy = today(), now = Date.now();
-  const mk = (name,phone,g,docId,slot,status,pay,method,extra)=>({
-    id:uid(),name,phone,gender:g,docId,date:tdy,slot,shift:slot?(toMin(slot)<780?'m':'e'):'',status,
-    fee:doctors.find(d=>d.id===docId).fee,pay:{state:pay,method,at:pay==='paid'?now:null},lang:'en',priority:false,createdAt:now,...extra});
+  const mk = (name, phone, age, g, docId, slot, status, pay, method, extra)=>({
+    id: uid(), name, phone, age, gender: g, address: 'Nashik', docId, date: tdy, slot, shift: slot ? (toMin(slot)<780?'m':'e') : '',
+    status, fee: docById(docId)?docById(docId).fee:500, pay:{state:pay, method, at: pay==='paid'?now:null}, lang:'en', createdAt: now, ...extra
+  });
   S.patients = [
-    mk('Meena Iyer','9890011122','Female','patel','09:20','done','paid','cash',{doneAt:now-3600e3}),
-    mk('Amit Sharma','9823011223','Male','patel','09:30','with','paid','upi'),
-    mk('Sneha Kulkarni','9811223344','Female','patel','10:00','waiting','paid','cash'),
-    mk('Mohan Rao','9822334455','Male','patel','','waiting','due',null),
-    mk('Priya Deshmukh','9765432109','Female','sonone','09:40','waiting','due',null),
-    mk('Kavita Joshi','9876501234','Female','sonone','','waiting','due',null),
-    mk('Rahul Verma','9988776655','Male','rathi','','waiting','due',null),
-    mk('Ganesh Patil','9730011223','Male','rathi','18:00','waiting','due',null,{date:addDays(tdy,1),shift:'e'})
+    mk('Meena Iyer','9890011122','45','Female','patel','09:20','done','paid','cash',{doneAt:now-3600e3}),
+    mk('Amit Sharma','9823011223','32','Male','patel','09:30','with','paid','upi'),
+    mk('Sneha Kulkarni','9811223344','28','Female','patel','10:00','waiting','paid','cash'),
+    mk('Mohan Rao','9822334455','60','Male','patel','','waiting','due',null),
+    mk('Priya Deshmukh','9765432109','5','Female','sonone','09:40','waiting','due',null),
+    mk('Rahul Verma','9988776655','38','Male','rathi','','waiting','due',null)
   ];
 }
+
 function loadState(){
   try{ const raw = ls.get(KEY); S = raw ? JSON.parse(raw) : null; }catch(e){ S = null; }
-  if(!S || S.v!==2) seedState();
-  ensureSchedule();
+  if(!S || S.v!==3) seedState();
 }
 function save(){ try{ ls.set(KEY, JSON.stringify(S)); }catch(e){} render(); }
-function saveUI(){ ss.set(UIKEY, JSON.stringify({role:ui.role,lang:ui.lang,me:ui.me,pStage:ui.pStage,rTab:ui.rTab,laneDoc:ui.laneDoc,schedDoc:ui.schedDoc,period:ui.period})); }
+function saveUI(){ ss.set(UIKEY, JSON.stringify({role:ui.role, lang:ui.lang, me:ui.me, pStage:ui.pStage, rTab:ui.rTab, laneDoc:ui.laneDoc, schedDoc:ui.schedDoc, period:ui.period})); }
 function loadUI(){
   try{ const raw = ss.get(UIKEY); if(raw) Object.assign(ui, JSON.parse(raw)); }catch(e){}
   const q = new URLSearchParams(location.search);
@@ -231,14 +260,19 @@ function loadUI(){
   if(q.get('p')){ ui.me = q.get('p'); ui.role = 'patient'; }
 }
 
-/* ───────────── Queue logic ───────────── */
+/* ───────────── Queue Calculations ───────────── */
 function laneAll(docId){
   const tdy = today();
   const l = S.patients.filter(p=>p.docId===docId && p.date===tdy && p.status!=='cancelled');
   const done = l.filter(p=>p.status==='done').sort((a,b)=>(a.doneAt||0)-(b.doneAt||0));
   return [...done, ...l.filter(p=>p.status==='with'), ...l.filter(p=>p.status==='waiting')];
 }
-function tok(p){ const i = laneAll(p.docId).indexOf(p); return i<0 ? '—' : docById(p.docId).code+'-'+(i+1); }
+function tok(p){ 
+  const doc = docById(p.docId);
+  const code = doc ? doc.code : 'D';
+  const i = laneAll(p.docId).indexOf(p);
+  return i<0 ? '—' : code+'-'+(i+1); 
+}
 function qInfo(p){
   const lane = laneAll(p.docId), idx = lane.indexOf(p);
   if(idx<0) return null;
@@ -248,46 +282,8 @@ function qInfo(p){
   let eta = nowMin()+wait; if(p.slot) eta = Math.max(eta, toMin(p.slot));
   return {idx, ahead, wait, eta, full, delay, serving: lane.find(q=>q.status==='with')};
 }
-function hoursOf(docId,date){ const s=S.sched[docId] && S.sched[docId][date]; return s ? ['m','e'].filter(k=>s[k].on).map(k=>({k,s:s[k].s,e:s[k].e})) : []; }
-function slotsFor(docId,date,k){
-  const s = S.sched[docId] && S.sched[docId][date]; if(!s || !s[k].on) return [];
-  const out=[], end=toMin(s[k].e);
-  for(let m=toMin(s[k].s); m+SLOT<=end; m+=SLOT){
-    const t0=fromMin(m);
-    const booked = S.patients.some(p=>p.docId===docId&&p.date===date&&p.slot===t0&&p.status!=='cancelled');
-    const past = date===today() && m<=nowMin();
-    out.push({t:t0,state:booked?'booked':past?'past':'free'});
-  }
-  return out;
-}
-function canWalkIn(docId){
-  const dl=S.delays[docId]; if(dl&&dl.full) return false;
-  return hoursOf(docId,today()).some(h=>toMin(h.e)>nowMin());
-}
-function insertPatient(p){
-  if(p.slot){
-    const i = S.patients.findIndex(q=>q.docId===p.docId&&q.date===p.date&&q.status==='waiting'&&(!q.slot||q.slot>p.slot));
-    if(i>=0){ S.patients.splice(i,0,p); return; }
-  }
-  S.patients.push(p);
-}
-function notify(p,key,vars){
-  const doc = docById(p.docId);
-  const text = tx(p.lang||'en',key,{doc:doc.name,link:baseUrl()+'?p='+p.id,...vars});
-  const ts = Date.now();
-  ['SMS','WhatsApp'].forEach(ch=>S.notes.unshift({id:uid(),pid:p.id,ch,text,ts}));
-  S.notes = S.notes.slice(0,200);
-}
-function afterChange(){
-  S.doctors.forEach(d=>laneAll(d.id).forEach(p=>{
-    if(p.status!=='waiting' || p.nearSent) return;
-    const i = qInfo(p);
-    if(i && i.ahead===1){ p.nearSent = true; notify(p,'n_next',{token:tok(p)}); }
-  }));
-}
-function methodName(lang,m){ return tx(lang,'m_'+m); }
 
-/* ───────────── Toasts & dialogs ───────────── */
+/* ───────────── Toasts & Dialogs ───────────── */
 function toast(msg,type){
   const el = document.createElement('div');
   el.className = 'toast pointer-events-auto rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-lg '+(type==='err'?'bg-rose-600':type==='warn'?'bg-amber-600':'bg-slate-900');
@@ -297,34 +293,27 @@ function toast(msg,type){
 }
 function openDialog(html){ $('#dlg-body').innerHTML = html; const d=$('#dlg'); if(!d.open) d.showModal(); }
 function closeDialog(){ const d=$('#dlg'); if(d.open) d.close(); pendingConfirm=null; }
-function confirmDialog(title,body,yes,cb,danger){
-  pendingConfirm = cb;
-  openDialog(`<div class="w-[min(92vw,24rem)] p-5"><h3 class="text-base font-bold">${esc(title)}</h3><p class="mt-1 text-sm text-slate-600">${esc(body||'')}</p>
-   <div class="mt-5 flex justify-end gap-2"><button data-act="dlgClose" class="${B.ghost}">${esc(arguments[5]||'Back')}</button><button data-act="dlgYes" class="${danger?B.danger:B.primary}">${esc(yes)}</button></div></div>`);
-}
 
-/* ───────────── Class helpers ───────────── */
+/* ───────────── UI Styles ───────────── */
 const B = {
   primary:'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40',
   ghost:'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50',
   danger:'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700',
-  sm:'inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition',
   card:'rounded-2xl border border-slate-200 bg-white p-4 shadow-sm',
   input:'w-full min-h-[44px] rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100'
 };
-const pill = (txt,cls) => `<span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${cls}">${txt}</span>`;
 
-/* ───────────── Rendering ───────────── */
+/* ───────────── Main Render Router ───────────── */
 function render(){
-  if(drag) { pendingRender = true; return; }
   const y = window.scrollY;
   $('#app').innerHTML = headerHTML() + `<main class="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">${viewHTML()}</main>` + footerHTML();
   document.documentElement.lang = ui.lang;
   window.scrollTo(0,y);
   saveUI();
 }
+
 function headerHTML(){
-  const roles = [['patient','fa-mobile-screen','navPatient'],['reception','fa-clipboard-list','navReception'],['admin','fa-chart-column','navAdmin']];
+  const roles = [['patient','fa-mobile-screen','navPatient'],['reception','fa-clipboard-list','navReception'],['admin','fa-user-doctor','manageDocs']];
   return `<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur no-print">
    <div class="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:px-6">
     <div class="flex min-w-0 items-center gap-2">
@@ -338,525 +327,580 @@ function headerHTML(){
      <select data-chg="lang" aria-label="Language" class="bg-transparent text-xs font-bold outline-none">
       <option value="en" ${ui.lang==='en'?'selected':''}>English</option><option value="hi" ${ui.lang==='hi'?'selected':''}>हिन्दी</option><option value="mr" ${ui.lang==='mr'?'selected':''}>मराठी</option>
      </select></label>
-    <span class="hidden items-center gap-1 text-[11px] font-semibold text-emerald-700 md:flex"><span class="pulse h-2 w-2 rounded-full bg-emerald-500"></span>Live</span>
    </div></header>`;
 }
+
 function footerHTML(){
   return `<footer class="mx-auto max-w-7xl px-3 pb-8 text-center text-[11px] text-slate-400 sm:px-6 no-print">
-   Demo data is stored in this browser · open Patient and Reception in two tabs to see live sync ·
-   <button data-act="resetDemo" class="font-semibold text-slate-500 underline">Reset demo data</button></footer>`;
+   Sky Multispecialty OPD System · 
+   <button data-act="resetDemo" class="font-semibold text-slate-500 underline">Reset Demo Data</button></footer>`;
 }
+
 function viewHTML(){
   if(ui.role==='reception') return receptionHTML();
-  if(ui.role==='admin') return adminHTML();
+  if(ui.role==='admin') return doctorManagementHTML();
   return patientHTML();
 }
 
-/* ═════════════ PATIENT ═════════════ */
+/* ═════════════ PATIENT VIEW ═════════════ */
 function patientHTML(){
   const me = S.patients.find(p=>p.id===ui.me);
   let inner;
   if(me) inner = ticketHTML(me);
-  else if(ui.pStage==='form') inner = formHTML();
+  else if(ui.pStage==='form') inner = patientRegistrationFormHTML();
   else inner = scanHTML();
   return `<div class="mx-auto max-w-md">${inner}</div>`;
 }
+
 function scanHTML(){
   const qr = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data='+encodeURIComponent(baseUrl());
   return `<section class="rounded-3xl bg-gradient-to-br from-blue-700 to-sky-500 p-6 text-white shadow-lg">
     <p class="text-[11px] font-bold uppercase tracking-widest text-blue-100">Sky Multispecialty Hospital</p>
     <h2 class="mt-1 text-2xl font-extrabold leading-tight">${esc(t('scanTitle'))}</h2>
     <p class="mt-2 text-sm text-blue-50">${esc(t('scanSub'))}</p></section>
-   <button data-act="scan" aria-label="${esc(t('scanBtn'))}" class="group relative mx-auto mt-6 block h-64 w-64 overflow-hidden rounded-3xl border-4 border-blue-500 bg-slate-900 shadow-xl">
+   <button data-act="scan" class="group relative mx-auto mt-6 block h-64 w-64 overflow-hidden rounded-3xl border-4 border-blue-500 bg-slate-900 shadow-xl">
      <span class="scan-line absolute left-0 z-10 h-1 w-full bg-cyan-300 shadow-[0_0_16px_#67e8f9]"></span>
      <span class="absolute inset-0 grid place-items-center"><img src="${qr}" alt="" class="h-40 w-40 rounded-xl bg-white p-2 opacity-90 transition group-hover:opacity-100"></span>
      <span class="absolute inset-x-0 bottom-3 text-center"><span class="rounded-full bg-black/60 px-3 py-1 text-[11px] text-white">${esc(t('scanTap'))}</span></span></button>
-   <button data-act="scan" class="${B.primary} mt-5 w-full py-3"><i class="fa-solid fa-camera"></i>${esc(t('scanBtn'))}</button>
-   <p class="mt-3 text-center text-xs text-slate-400">${esc(t('scanDemo'))}</p>`;
+   <button data-act="scan" class="${B.primary} mt-5 w-full py-3"><i class="fa-solid fa-camera"></i>${esc(t('scanBtn'))}</button>`;
 }
 
-function formErrors(){
-  const d=draft, e={};
-  if(d.name.trim().length<2) e.name = t('errName');
-  if(!/^\d{10}$/.test(d.phone)) e.phone = t('errPhone');
-  if(!d.docId) e.doc = t('errDoctor');
-  else if(!d.slot) e.slot = t('errSlot');
-  return e;
-}
-function formHTML(){
-  const d = draft, err = d.tried ? formErrors() : {};
+/* ───────────── Single-Sheet New-Patient Registration Form ───────────── */
+function patientRegistrationFormHTML(){
+  const d = draft;
   const doc = d.docId ? docById(d.docId) : null;
   const days = Array.from({length:7},(_,i)=>addDays(today(),i));
-  const fieldErr = k => err[k] ? `<p class="mt-1 text-xs font-semibold text-rose-600"><i class="fa-solid fa-circle-exclamation mr-1"></i>${esc(err[k])}</p>` : '';
+  
+  // Compact 7-day schedule preview generator
+  let dayPreviewHTML = '';
+  if(doc){
+    dayPreviewHTML = `<div class="mt-2 grid grid-cols-7 gap-1">
+      ${days.map(ds => {
+        const shiftInfo = getShiftForDate(doc, ds);
+        const dayName = new Date(ds+'T00:00:00').toLocaleDateString(LOC[ui.lang]||'en-IN',{weekday:'narrow'});
+        const dayNum = ds.split('-')[2];
+        const isSelected = d.date === ds;
+        let badgeCls = 'bg-slate-100 text-slate-400';
+        let label = 'Off';
+        if(shiftInfo.vacation){ badgeCls = 'bg-rose-100 text-rose-700'; label = 'Vac'; }
+        else if(shiftInfo.m.on || shiftInfo.e.on){ badgeCls = 'bg-emerald-100 text-emerald-700'; label = 'OPD'; }
+        
+        return `<button type="button" data-act="pickDate" data-date="${ds}" class="flex flex-col items-center justify-center rounded-xl border p-1.5 transition ${isSelected?'border-blue-600 bg-blue-50 ring-2 ring-blue-200':'border-slate-200 bg-white'}">
+          <span class="text-[10px] font-bold text-slate-500">${dayName}</span>
+          <span class="text-xs font-extrabold text-slate-800">${dayNum}</span>
+          <span class="mt-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${badgeCls}">${label}</span>
+        </button>`;
+      }).join('')}
+    </div>`;
+  }
+
   let slotBlock = '';
   if(doc){
-    const hrs = hoursOf(doc.id,d.date);
-    const tabs = hrs.map(h=>`<button type="button" data-act="pickShift" data-id="${h.k}" aria-pressed="${d.shift===h.k}" class="flex-1 rounded-lg px-2 py-2 text-xs font-bold transition ${d.shift===h.k?'bg-blue-600 text-white shadow':'text-slate-600'}">${h.k==='m'?'🌅':'🌇'} ${esc(t(h.k==='m'?'morning':'evening'))}<span class="block text-[10px] font-medium opacity-80">${fmt12(h.s)} – ${fmt12(h.e)}</span></button>`).join('');
-    const sl = d.shift ? slotsFor(doc.id,d.date,d.shift) : [];
-    const walk = d.date===today() ? `<button type="button" data-act="pickSlot" data-id="walkin" ${canWalkIn(doc.id)?'':'disabled'} aria-pressed="${d.slot==='walkin'}" class="mb-2 flex w-full items-center gap-3 rounded-xl border p-3 text-left transition disabled:opacity-40 ${d.slot==='walkin'?'border-blue-600 bg-blue-50 ring-2 ring-blue-200':'border-slate-200 bg-white'}"><i class="fa-solid fa-person-walking text-blue-600"></i><span><span class="block text-sm font-bold">${esc(t('walkIn'))}</span><span class="block text-xs text-slate-500">${esc(t('walkInHint'))}</span></span></button>` : '';
-    slotBlock = `<div><p class="mb-1.5 text-xs font-bold text-slate-700">${esc(t('chooseSlot'))}</p>${walk}
-      ${hrs.length ? `<div class="mb-2 flex gap-1 rounded-xl bg-slate-100 p-1">${tabs}</div>` : `<p class="rounded-xl bg-slate-100 p-3 text-center text-xs text-slate-500">${esc(t('noOpd'))}</p>`}
-      ${d.shift ? (sl.length ? `<div class="grid grid-cols-4 gap-1.5" role="group">${sl.map(s=>`<button type="button" ${s.state!=='free'?'disabled':''} data-act="pickSlot" data-id="${s.t}" aria-pressed="${d.slot===s.t}" class="min-h-[40px] rounded-lg border text-xs font-bold tabular-nums transition ${d.slot===s.t?'border-blue-600 bg-blue-600 text-white':s.state==='free'?'border-slate-200 bg-white hover:border-blue-400':'border-transparent bg-slate-100 text-slate-300 line-through'}">${fmt12(s.t).replace(' ','\u00a0')}</button>`).join('')}</div>` : `<p class="text-center text-xs text-slate-500">${esc(t('noSlots'))}</p>`) : ''}
-      ${fieldErr('slot')}</div>`;
+    const hrs = hoursOf(doc.id, d.date);
+    const onVacation = isDoctorOnVacation(doc, d.date);
+    
+    if(onVacation){
+      slotBlock = `<div class="rounded-xl bg-rose-50 p-3 text-center text-xs font-bold text-rose-700 border border-rose-200"><i class="fa-solid fa-plane-arrival mr-1"></i>${esc(t('vacation'))}</div>`;
+    } else {
+      const tabs = hrs.map(h=>`<button type="button" data-act="pickShift" data-id="${h.k}" aria-pressed="${d.shift===h.k}" class="flex-1 rounded-lg px-2 py-2 text-xs font-bold transition ${d.shift===h.k?'bg-blue-600 text-white shadow':'text-slate-600'}">${h.k==='m'?'🌅':'🌇'} ${esc(t(h.k==='m'?'morning':'evening'))}<span class="block text-[10px] font-medium opacity-80">${fmt12(h.s)} – ${fmt12(h.e)}</span></button>`).join('');
+      const sl = d.shift ? slotsFor(doc.id, d.date, d.shift) : [];
+      
+      slotBlock = `<div>
+        <!-- Mode Switcher: Walk-in vs Phone Appt -->
+        <div class="mb-3 flex rounded-xl bg-slate-100 p-1">
+          <button type="button" data-act="pickMode" data-mode="walkin" class="flex-1 py-1.5 text-xs font-bold rounded-lg ${d.mode==='walkin'?'bg-white text-blue-700 shadow':'text-slate-600'}"><i class="fa-solid fa-person-walking mr-1"></i>Walk-in Token</button>
+          <button type="button" data-act="pickMode" data-mode="appointment" class="flex-1 py-1.5 text-xs font-bold rounded-lg ${d.mode==='appointment'?'bg-white text-blue-700 shadow':'text-slate-600'}"><i class="fa-solid fa-clock mr-1"></i>10-Min Appt</button>
+        </div>
+
+        ${d.mode === 'walkin' ? `
+          <div class="rounded-xl border border-blue-200 bg-blue-50/60 p-3 text-xs text-blue-900">
+            <p class="font-bold"><i class="fa-solid fa-ticket mr-1"></i>${esc(t('walkIn'))}</p>
+            <p class="mt-0.5 text-slate-600">${esc(t('walkInHint'))}</p>
+          </div>
+        ` : `
+          ${hrs.length ? `<div class="mb-2 flex gap-1 rounded-xl bg-slate-100 p-1">${tabs}</div>` : `<p class="rounded-xl bg-slate-100 p-3 text-center text-xs text-slate-500">${esc(t('noOpd'))}</p>`}
+          ${d.shift ? (sl.length ? `<div class="grid grid-cols-4 gap-1.5">${sl.map(s=>`<button type="button" ${s.state!=='free'?'disabled':''} data-act="pickSlot" data-id="${s.t}" aria-pressed="${d.slot===s.t}" class="min-h-[40px] rounded-lg border text-xs font-bold tabular-nums transition ${d.slot===s.t?'border-blue-600 bg-blue-600 text-white':s.state==='free'?'border-slate-200 bg-white hover:border-blue-400':'border-transparent bg-slate-100 text-slate-300 line-through'}">${fmt12(s.t).replace(' ','\u00a0')}</button>`).join('')}</div>` : `<p class="text-center text-xs text-slate-500">${esc(t('noSlots'))}</p>`) : ''}
+        `}
+      </div>`;
+    }
   }
-  const submitLabel = d.slot && d.slot!=='walkin' ? t('bookSlot',{time:fmt12(d.slot)}) : t('getToken');
+
   return `<section class="${B.card}">
-    <h2 class="text-lg font-extrabold">${esc(t('regTitle'))}</h2><p class="text-sm text-slate-500">${esc(t('regSub'))}</p>
-    <div class="mt-4 space-y-4">
-     <div><label for="f-name" class="mb-1 block text-xs font-bold text-slate-700">${esc(t('fullName'))}</label>
-      <input id="f-name" data-draft="name" autocomplete="name" value="${esc(d.name)}" placeholder="${esc(t('namePh'))}" class="${B.input}">${fieldErr('name')}</div>
-     <div><label for="f-phone" class="mb-1 block text-xs font-bold text-slate-700">${esc(t('mobile'))}</label>
-      <div class="flex gap-2"><span class="grid min-h-[44px] place-items-center rounded-xl bg-slate-100 px-3 text-sm font-bold text-slate-600">+91</span>
-      <input id="f-phone" data-draft="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel-national" value="${esc(d.phone)}" placeholder="98XXXXXXXX" class="${B.input}"></div>
-      <p class="mt-1 text-[11px] text-slate-400"><i class="fa-brands fa-whatsapp mr-1"></i>${esc(t('mobileHint'))}</p>${fieldErr('phone')}</div>
-     <div><p class="mb-1 text-xs font-bold text-slate-700">${esc(t('gender'))}</p>
-      <div class="flex gap-1 rounded-xl bg-slate-100 p-1">${[['Male','male'],['Female','female'],['Other','other']].map(([v,k])=>`<button type="button" data-act="pickGender" data-id="${v}" aria-pressed="${d.gender===v}" class="min-h-[38px] flex-1 rounded-lg text-xs font-bold transition ${d.gender===v?'bg-white text-blue-700 shadow':'text-slate-500'}">${esc(t(k))}</button>`).join('')}</div></div>
-     <div><p class="mb-1.5 text-xs font-bold text-slate-700">${esc(t('chooseDoctor'))}</p>
-      <div class="space-y-2">${S.doctors.map(x=>{
-        const dl = S.delays[x.id], hrs = hoursOf(x.id,today()), sel = d.docId===x.id;
-        const sub = dl ? (dl.full ? t('unavailable') : t('delayed',{m:dl.mins})) : hrs.length ? t('todayLbl')+': '+hrs.map(h=>fmt12(h.s)+'–'+fmt12(h.e)).join(' · ') : t('todayLbl')+': '+t('noOpd');
-        return `<button type="button" data-act="pickDoc" data-id="${x.id}" aria-pressed="${sel}" class="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${sel?'border-blue-600 bg-blue-50 ring-2 ring-blue-200':'border-slate-200 bg-white hover:border-blue-300'}">
-          <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-extrabold text-white" style="background:${x.color}">${x.code}</span>
-          <span class="min-w-0 flex-1"><span class="block text-sm font-bold">${esc(x.name)}</span><span class="block text-xs text-slate-500">${esc(x.spec[L()]||x.spec.en)}</span><span class="mt-0.5 block text-[11px] ${dl?'font-semibold text-rose-600':'text-slate-400'}">${esc(sub)}</span></span>
-          <span class="text-right text-sm font-extrabold text-slate-700">${money(x.fee)}</span></button>`;}).join('')}</div>${fieldErr('doc')}</div>
-     ${doc?`<div><p class="mb-1.5 text-xs font-bold text-slate-700">${esc(t('chooseDay'))}</p>
-      <div class="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">${days.map(ds=>{ const has=hoursOf(doc.id,ds).length>0, sel=d.date===ds;
-        const dt=new Date(ds+'T00:00:00');
-        return `<button type="button" data-act="pickDay" data-id="${ds}" ${has?'':'disabled'} aria-pressed="${sel}" class="flex min-h-[58px] w-14 shrink-0 flex-col items-center justify-center rounded-xl border text-center transition ${sel?'border-blue-600 bg-blue-600 text-white':has?'border-slate-200 bg-white hover:border-blue-300':'border-transparent bg-slate-100 text-slate-300'}"><span class="text-[10px] font-semibold uppercase">${esc(ds===today()?t('todayLbl'):dt.toLocaleDateString(LOC[L()],{weekday:'short'}))}</span><span class="text-lg font-extrabold leading-tight">${dt.getDate()}</span></button>`;}).join('')}</div></div>${slotBlock}`:''}
-     <button data-act="submitReg" class="${B.primary} w-full py-3"><i class="fa-solid fa-ticket"></i>${esc(submitLabel)}</button>
-     <button data-act="backScan" class="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600">${esc(t('rescan'))}</button>
-    </div></section>`;
+    <h2 class="text-lg font-extrabold text-slate-900">${esc(t('regTitle'))}</h2>
+    <p class="text-xs text-slate-500">${esc(t('regSub'))}</p>
+    
+    <form onsubmit="return false;" class="mt-4 space-y-3.5">
+      <!-- Patient Information -->
+      <div>
+        <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('fullName'))}</label>
+        <input data-draft="name" autocomplete="name" value="${esc(d.name)}" placeholder="${esc(t('namePh'))}" class="${B.input}">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('mobile'))}</label>
+          <input data-draft="phone" type="tel" maxlength="10" value="${esc(d.phone)}" placeholder="9876543210" class="${B.input}">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('ageOrDob'))}</label>
+          <input data-draft="age" value="${esc(d.age)}" placeholder="${esc(t('agePh'))}" class="${B.input}">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('gender'))}</label>
+          <select data-draft="gender" class="${B.input}">
+            <option value="Male" ${d.gender==='Male'?'selected':''}>${esc(t('male'))}</option>
+            <option value="Female" ${d.gender==='Female'?'selected':''}>${esc(t('female'))}</option>
+            <option value="Other" ${d.gender==='Other'?'selected':''}>${esc(t('other'))}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('address'))}</label>
+          <input data-draft="address" value="${esc(d.address)}" placeholder="${esc(t('addPh'))}" class="${B.input}">
+        </div>
+      </div>
+
+      <hr class="border-slate-100">
+
+      <!-- Doctor & Slot Selection -->
+      <div>
+        <label class="mb-1 block text-xs font-bold text-slate-700">${esc(t('chooseDoctor'))}</label>
+        <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+          ${S.doctors.map(doc => `<button type="button" data-act="pickDoc" data-id="${doc.id}" class="flex items-center gap-2 rounded-xl border p-2.5 text-left transition ${d.docId===doc.id?'border-blue-600 bg-blue-50/60 ring-2 ring-blue-200':'border-slate-200 bg-white'}">
+            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs font-extrabold text-white" style="background:${doc.color}">${doc.code}</span>
+            <div class="min-w-0 flex-1"><p class="truncate text-xs font-bold">${esc(doc.name)}</p><p class="truncate text-[10px] text-slate-500">${money(doc.fee)}</p></div>
+          </button>`).join('')}
+        </div>
+      </div>
+
+      ${doc ? `
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold text-slate-700">${esc(t('chooseDay'))}</label>
+            <span class="text-[11px] font-semibold text-blue-600">${d.date===today()?t('todayLbl'):d.date}</span>
+          </div>
+          ${dayPreviewHTML}
+        </div>
+        ${slotBlock}
+      ` : ''}
+
+      <button type="button" data-act="submitReg" class="${B.primary} w-full py-3 mt-2">
+        <i class="fa-solid fa-ticket"></i>${esc(d.mode==='appointment' && d.slot ? t('bookSlot',{time:fmt12(d.slot)}) : t('getToken'))}
+      </button>
+    </form>
+  </section>`;
 }
 
-function upiLink(doc,p){ return `upi://pay?pa=${doc.upi}&pn=${encodeURIComponent(doc.name+' - Sky Hospital')}&am=${p.fee}&cu=INR&tn=${encodeURIComponent('OPD fee '+(p.date===today()?tok(p):p.slot))}`; }
-function payHTML(p,doc){
-  if(p.pay.state==='paid') return `<section class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div class="flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-full bg-emerald-600 text-white"><i class="fa-solid fa-check"></i></span><div><p class="text-sm font-bold text-emerald-800">${esc(t('payDone'))}</p><p class="text-xs text-emerald-700">${money(p.fee)} · ${esc(t('paidVia',{method:methodName(L(),p.pay.method)}))}</p></div></div></section>`;
-  const link = upiLink(doc,p), qr = 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&data='+encodeURIComponent(link);
-  return `<section class="rounded-2xl bg-slate-900 p-4 text-center text-white">
-    <div class="flex items-center justify-between text-left"><p class="text-xs font-bold text-cyan-300"><i class="fa-solid fa-qrcode mr-1"></i>${esc(t('payTitle'))}</p>${pill(esc(p.pay.state==='claimed'?t('claimed'):t('due')), p.pay.state==='claimed'?'bg-amber-100 text-amber-800':'bg-rose-100 text-rose-800')}</div>
-    <p class="mt-2 text-sm font-semibold">${esc(t('payTo',{amt:p.fee,doc:doc.name}))}</p>
-    <div class="mx-auto my-3 inline-block rounded-xl bg-white p-2"><img src="${qr}" alt="UPI QR" class="h-44 w-44" onerror="this.style.display='none';this.nextElementSibling.classList.remove('hidden')"><p class="hidden h-44 w-44 p-4 text-xs text-slate-500">QR unavailable offline — use the UPI ID below.</p></div>
-    <p class="text-[11px] text-slate-400">${esc(t('scanToPay'))}</p>
-    <p class="mt-1 select-all text-sm font-bold">${esc(t('upiId'))}: ${esc(doc.upi)}</p>
-    <div class="mt-3 grid ${p.pay.state==='due'?'grid-cols-2':'grid-cols-1'} gap-2">
-     <a href="${esc(link)}" class="${B.sm} min-h-[44px] bg-cyan-500 text-slate-900 hover:bg-cyan-400"><i class="fa-solid fa-mobile-screen-button"></i>${esc(t('openUpi'))}</a>
-     ${p.pay.state==='due'?`<button data-act="iPaid" class="${B.sm} min-h-[44px] bg-white/10 text-white hover:bg-white/20"><i class="fa-solid fa-check"></i>${esc(t('iPaid'))}</button>`:''}
-    </div>
-    ${p.pay.state==='claimed'?`<p class="mt-2 text-[11px] text-amber-300">${esc(t('payNote'))}</p>`:''}</section>`;
-}
 function ticketHTML(p){
-  const doc = docById(p.docId), isToday = p.date===today();
-  if(p.status==='cancelled') return `<section class="${B.card} text-center"><span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-rose-100 text-xl text-rose-600"><i class="fa-solid fa-xmark"></i></span><h2 class="mt-3 text-lg font-extrabold">${esc(t('cancelledTitle'))}</h2><p class="text-sm text-slate-500">${esc(t('cancelledSub'))}</p><button data-act="newReg" class="${B.primary} mt-4 w-full">${esc(t('newReg'))}</button></section>`;
-  if(p.status==='done') return `<section class="${B.card} text-center"><span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-xl text-emerald-600"><i class="fa-solid fa-check"></i></span><h2 class="mt-3 text-lg font-extrabold">${esc(t('doneTitle'))}</h2><p class="text-sm text-slate-500">${esc(t('doneSub'))}</p></section><div class="mt-4">${payHTML(p,doc)}</div><button data-act="newReg" class="${B.ghost} mt-4 w-full">${esc(t('newReg'))}</button>`;
-  const info = isToday ? qInfo(p) : null;
-  const dl = S.delays[p.docId];
-  const stCls = p.status==='with' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800';
-  const stTxt = !isToday ? t('stBooked') : p.status==='with' ? t('stWith') : t('stWaiting');
-  const notes = S.notes.filter(n=>n.pid===p.id).slice(0,8);
-  let queueCard = '';
-  if(isToday && info){
-    if(info.full) queueCard = `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700"><i class="fa-solid fa-triangle-exclamation mr-2"></i>${esc(t('docUnavail',{doc:doc.name}))}</div>`;
-    else if(p.status==='with') queueCard = `<div class="rounded-2xl bg-emerald-600 p-4 text-center text-white"><i class="fa-solid fa-bell mb-1 text-xl"></i><p class="text-sm font-bold">${esc(t('yourTurn'))}</p></div>`;
-    else {
-      const dots = Array.from({length:Math.min(info.ahead,8)},()=>'<span class="h-3 w-3 rounded-full bg-slate-300"></span>').join('');
-      queueCard = `<div class="${B.card}"><div class="flex items-end justify-between"><div><p class="text-[11px] font-bold uppercase tracking-wide text-slate-400">${esc(t('estWait'))}</p><p class="text-3xl font-black text-blue-700 tabular-nums">~${info.wait}<span class="ml-1 text-sm font-bold text-slate-500">${esc(t('min'))}</span></p></div>
-        <div class="text-right"><p class="text-sm font-bold">${esc(info.ahead===0?t('aheadNone'):t('ahead',{n:info.ahead}))}</p><p class="text-[11px] text-slate-500">${esc(t('expected',{time:fmt12(info.eta)}))}</p></div></div>
-        <div class="mt-3 flex items-center gap-1.5" aria-hidden="true">${dots}${info.ahead>8?'<span class="text-[10px] text-slate-400">+'+(info.ahead-8)+'</span>':''}<span class="grid h-6 w-6 place-items-center rounded-full bg-blue-600 text-[10px] font-bold text-white">${t('rescan')?'★':''}</span></div>
-        <p class="mt-3 border-t border-slate-100 pt-2 text-xs text-slate-500">${esc(t('nowServing'))}: <b class="text-slate-800">${info.serving?tok(info.serving):'—'}</b></p></div>`;
-    }
-  } else if(!isToday){
-    queueCard = `<div class="${B.card} flex items-center gap-3"><span class="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-blue-600"><i class="fa-solid fa-calendar-check"></i></span><div><p class="text-sm font-bold">${esc(dayLabel(p.date,L(),{weekday:'long',day:'numeric',month:'long'}))}</p><p class="text-xs text-slate-500">${esc(t('slotAt',{time:fmt12(p.slot)}))}</p></div></div>`;
-  }
-  const delayBanner = isToday && dl && !dl.full ? `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-700"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i>${esc(t('delayBanner',{doc:doc.name,m:dl.mins}))}</div>` : '';
-  return `<div class="space-y-3">
-   <section class="rounded-3xl bg-gradient-to-br from-blue-800 to-slate-900 p-5 text-center text-white shadow-lg">
-     <p class="text-[11px] font-bold uppercase tracking-widest text-blue-200">${esc(p.name)}</p>
-     <p class="mt-2 text-[11px] text-blue-300">${esc(t('tokenYour'))}</p>
-     <p class="text-6xl font-black tracking-tight text-cyan-300">${isToday?esc(tok(p)):'—'}</p>
-     <p class="mt-1 text-sm font-semibold">${esc(doc.name)} <span class="font-normal text-blue-200">· ${esc(doc.spec[L()]||doc.spec.en)}</span></p>
-     <p class="mt-1 text-xs text-amber-300">${p.slot?esc(t('slotAt',{time:fmt12(p.slot)})):esc(t('walkInQ'))}</p>
-     <div class="mt-3">${pill(esc(stTxt),stCls)}</div></section>
-   ${delayBanner}${queueCard}${payHTML(p,doc)}
-   <section class="${B.card}"><h3 class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">${esc(t('updates'))}</h3>
-    ${notes.length?`<ul class="space-y-2">${notes.filter((n,i,a)=>a.findIndex(m=>m.ts===n.ts&&m.text===n.text)===i).map(n=>`<li class="flex gap-2 text-xs"><span class="mt-0.5 flex gap-1 text-slate-400"><i class="fa-solid fa-message"></i><i class="fa-brands fa-whatsapp text-emerald-500"></i></span><span><span class="text-slate-700">${esc(n.text)}</span><span class="block text-[10px] text-slate-400">${fmt12(new Date(n.ts).getHours()*60+new Date(n.ts).getMinutes())}</span></span></li>`).join('')}</ul>`:`<p class="text-xs text-slate-400">${esc(t('noUpdates'))}</p>`}</section>
-   <div class="grid grid-cols-2 gap-2"><button data-act="shareWa" class="${B.sm} min-h-[44px] bg-emerald-600 text-white hover:bg-emerald-700"><i class="fa-brands fa-whatsapp"></i>${esc(t('saveWa'))}</button>
-    <button data-act="cancelMine" class="${B.sm} min-h-[44px] border border-rose-200 bg-white text-rose-600 hover:bg-rose-50"><i class="fa-solid fa-xmark"></i>${esc(t('cancelTok'))}</button></div>
-   <button data-act="newReg" class="w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-600">${esc(t('rescan'))}</button></div>`;
-}
+  const doc = docById(p.docId);
+  const info = qInfo(p);
+  const isDone = p.status === 'done';
 
-/* ═════════════ RECEPTION ═════════════ */
-function receptionHTML(){
-  const tabs = [['queue','fa-list-check','Live Queue'],['schedule','fa-calendar-days','Schedule'],['payments','fa-indian-rupee-sign','Payments'],['messages','fa-comment-sms','Messages']];
-  const waiting = S.patients.filter(p=>p.date===today()&&p.status==='waiting').length;
-  return `<div class="space-y-4">
-   <div class="${B.card} flex flex-wrap items-center justify-between gap-3">
-    <div><h2 class="text-lg font-extrabold">Reception Console</h2><p class="text-xs text-slate-500">${waiting} waiting today · ${dayLabel(today(),'en',{weekday:'long',day:'numeric',month:'long'})}</p></div>
-    <div class="flex flex-wrap gap-2">
-     <button data-act="openAdd" class="${B.primary} !min-h-[40px]"><i class="fa-solid fa-user-plus"></i>Add patient</button>
-     <button data-act="openEmergency" class="${B.danger} !min-h-[40px]"><i class="fa-solid fa-triangle-exclamation"></i>Emergency</button>
-     <button data-act="openPoster" class="${B.ghost} !min-h-[40px]"><i class="fa-solid fa-qrcode"></i>QR poster</button></div></div>
-   <nav class="no-scrollbar flex gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-1 shadow-sm" aria-label="Reception sections">
-    ${tabs.map(([id,ic,l])=>`<button data-act="rTab" data-id="${id}" aria-pressed="${ui.rTab===id}" class="flex min-h-[40px] flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs font-bold transition ${ui.rTab===id?'bg-blue-600 text-white shadow-sm':'text-slate-600 hover:bg-slate-50'}"><i class="fa-solid ${ic}"></i>${l}</button>`).join('')}</nav>
-   ${ui.rTab==='schedule'?scheduleHTML():ui.rTab==='payments'?paymentsHTML():ui.rTab==='messages'?messagesHTML():queueHTML()}</div>`;
-}
-function shiftNow(docId){
-  const hrs = hoursOf(docId,today()), n = nowMin();
-  const cur = hrs.find(h=>toMin(h.s)<=n && n<toMin(h.e));
-  if(cur) return {on:true,txt:(cur.k==='m'?'Morning':'Evening')+' OPD · '+fmt12(cur.s)+'–'+fmt12(cur.e)};
-  const nxt = hrs.find(h=>toMin(h.s)>n);
-  if(nxt) return {on:false,txt:'Next: '+(nxt.k==='m'?'Morning':'Evening')+' OPD at '+fmt12(nxt.s)};
-  return {on:false,txt:hrs.length?'OPD finished for today':'No OPD today'};
-}
-function payChip(p){
-  if(p.pay.state==='paid') return pill('<i class="fa-solid fa-check"></i> Paid · '+esc(methodName('en',p.pay.method)),'bg-emerald-100 text-emerald-800');
-  if(p.pay.state==='claimed') return pill('<i class="fa-solid fa-hourglass-half"></i> Patient says paid — verify','bg-amber-100 text-amber-800');
-  return pill('Unpaid','bg-rose-100 text-rose-800');
-}
-function cardHTML(p,pos,total){
-  const isWait = p.status==='waiting', isWith = p.status==='with';
-  const payBtns = p.pay.state!=='paid' ? `<div class="flex flex-wrap items-center gap-1"><span class="text-[11px] font-semibold text-slate-400">Log:</span>${['cash','upi','upi_qr'].map(m=>`<button data-act="logPay" data-id="${p.id}" data-m="${m}" class="${B.sm} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">${esc(methodName('en',m))}</button>`).join('')}</div>` : '';
-  return `<article class="qcard ${isWith?'border-emerald-300 bg-emerald-50/50':'bg-white'} rounded-xl border border-slate-200 p-3 shadow-sm" data-id="${p.id}" data-drag="${isWait?1:0}">
-   <div class="flex items-start gap-2">
-    ${isWait?`<span class="drag-handle -ml-1 grid h-10 w-8 shrink-0 place-items-center text-slate-400 hover:text-slate-700" title="Drag to reorder" aria-label="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></span>`:'<span class="w-1"></span>'}
-    <div class="min-w-0 flex-1">
-     <div class="flex flex-wrap items-center gap-1.5"><span class="rounded-md bg-blue-600 px-2 py-0.5 text-xs font-black text-white">${esc(tok(p))}</span><span class="truncate text-sm font-bold">${esc(p.name)}</span>${p.priority?'<i class="fa-solid fa-star text-amber-500" title="Priority"></i>':''}</div>
-     <p class="mt-0.5 text-[11px] text-slate-500"><a href="tel:+91${esc(p.phone)}" class="font-semibold text-blue-700">+91 ${esc(p.phone)}</a> · ${esc(p.gender)} · ${p.slot?'<i class="fa-regular fa-clock"></i> '+fmt12(p.slot):'Walk-in'}</p></div>
-    <button data-act="cancelPat" data-id="${p.id}" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600" aria-label="Cancel token"><i class="fa-solid fa-trash-can"></i></button></div>
-   <div class="mt-2 flex flex-wrap items-center gap-1.5">
-    ${isWait?`<button data-act="callIn" data-id="${p.id}" class="${B.sm} bg-emerald-600 text-white hover:bg-emerald-700"><i class="fa-solid fa-bell-concierge"></i>Call in</button>
-      <button data-act="moveUp" data-id="${p.id}" ${pos===0?'disabled':''} class="${B.sm} border border-slate-200 bg-white disabled:opacity-30" aria-label="Move up"><i class="fa-solid fa-arrow-up"></i></button>
-      <button data-act="moveDown" data-id="${p.id}" ${pos===total-1?'disabled':''} class="${B.sm} border border-slate-200 bg-white disabled:opacity-30" aria-label="Move down"><i class="fa-solid fa-arrow-down"></i></button>
-      <button data-act="prio" data-id="${p.id}" class="${B.sm} border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"><i class="fa-solid fa-star"></i>Priority</button>`:''}
-    ${isWith?`<button data-act="complete" data-id="${p.id}" class="${B.sm} bg-blue-600 text-white hover:bg-blue-700"><i class="fa-solid fa-flag-checkered"></i>Complete visit</button>`:''}
-   </div>
-   <div class="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">
-    <div class="flex items-center gap-2">${payChip(p)}<label class="flex items-center gap-1 text-[11px] text-slate-400">₹<input type="number" min="0" step="50" value="${p.fee}" data-chg="fee" data-id="${p.id}" aria-label="Fee" class="w-16 rounded-md border border-slate-200 px-1.5 py-1 text-xs font-bold text-slate-700"></label></div>
-    ${payBtns}</div></article>`;
-}
-function laneHTML(doc){
-  const all = laneAll(doc.id), withP = all.filter(p=>p.status==='with'), wait = all.filter(p=>p.status==='waiting'), done = all.filter(p=>p.status==='done');
-  const sh = shiftNow(doc.id), dl = S.delays[doc.id];
-  return `<section class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-   <div class="mb-3 flex items-center gap-3"><span class="grid h-10 w-10 place-items-center rounded-full text-sm font-extrabold text-white" style="background:${doc.color}">${doc.code}</span>
-    <div class="min-w-0 flex-1"><h3 class="truncate text-sm font-extrabold">${esc(doc.name)}</h3><p class="truncate text-[11px] ${sh.on?'font-semibold text-emerald-700':'text-slate-500'}"><i class="fa-solid fa-circle text-[7px] ${sh.on?'text-emerald-500':'text-slate-300'}"></i> ${esc(sh.txt)}</p></div>
-    <div class="text-right"><p class="text-lg font-black leading-none text-blue-700">${wait.length}</p><p class="text-[10px] text-slate-400">waiting</p></div></div>
-   ${dl?`<div class="mb-3 flex items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs font-semibold text-rose-700"><span><i class="fa-solid fa-triangle-exclamation mr-1"></i>${dl.full?'Unavailable for the day':'Emergency delay +'+dl.mins+' min'}</span><button data-act="clearDelay" data-id="${doc.id}" class="rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-rose-700 shadow-sm hover:bg-rose-100">Clear</button></div>`:''}
-   <div class="space-y-2">${withP.map(p=>cardHTML(p,0,1)).join('')}
-    <div class="lane-wait space-y-2" data-doc="${doc.id}">${wait.map((p,i)=>cardHTML(p,i,wait.length)).join('')}</div>
-    ${!withP.length&&!wait.length?'<p class="rounded-xl border border-dashed border-slate-300 p-5 text-center text-xs text-slate-400">No patients in queue</p>':''}</div>
-   ${done.length?`<details class="mt-3"><summary class="cursor-pointer text-xs font-semibold text-slate-500">${done.length} completed today</summary><ul class="mt-2 space-y-1">${done.map(p=>`<li class="flex items-center justify-between rounded-lg bg-white px-2.5 py-1.5 text-xs"><span><b>${esc(tok(p))}</b> ${esc(p.name)}</span>${payChip(p)}</li>`).join('')}</ul></details>`:''}</section>`;
-}
-function queueHTML(){
-  const docs = S.doctors.filter(d=>ui.laneDoc==='all'||d.id===ui.laneDoc);
-  const upcoming = S.patients.filter(p=>p.date>today()&&p.status!=='cancelled').sort((a,b)=>(a.date+(a.slot||'')).localeCompare(b.date+(b.slot||'')));
-  return `<div class="space-y-4">
-   <div class="no-scrollbar flex gap-1.5 overflow-x-auto">${[{id:'all',name:'All doctors'},...S.doctors].map(d=>`<button data-act="laneDoc" data-id="${d.id}" aria-pressed="${ui.laneDoc===d.id}" class="min-h-[36px] whitespace-nowrap rounded-full border px-3.5 text-xs font-bold transition ${ui.laneDoc===d.id?'border-blue-600 bg-blue-600 text-white':'border-slate-200 bg-white text-slate-600'}">${esc(d.name)}</button>`).join('')}</div>
-   <p class="text-[11px] text-slate-500"><i class="fa-solid fa-hand-pointer mr-1"></i>Drag the <i class="fa-solid fa-grip-vertical mx-0.5"></i> handle (works on touch too) or use ▲▼ to reorder. Token numbers update automatically and patients are notified when they are next.</p>
-   <div class="grid gap-4 ${docs.length>1?'lg:grid-cols-3 md:grid-cols-2':'max-w-xl'}">${docs.map(laneHTML).join('')}</div>
-   ${upcoming.length?`<section class="${B.card}"><h3 class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">Upcoming bookings</h3><ul class="divide-y divide-slate-100">${upcoming.map(p=>`<li class="flex flex-wrap items-center justify-between gap-2 py-2 text-xs"><span><b>${esc(p.name)}</b> · ${esc(docById(p.docId).name)}</span><span class="text-slate-500">${esc(dayLabel(p.date,'en'))} · ${p.slot?fmt12(p.slot):'—'}<button data-act="cancelPat" data-id="${p.id}" class="ml-2 text-rose-500 hover:underline">Cancel</button></span></li>`).join('')}</ul></section>`:''}</div>`;
-}
-function scheduleHTML(){
-  const doc = docById(ui.schedDoc) || S.doctors[0];
-  const days = Array.from({length:7},(_,i)=>addDays(today(),i));
-  const cell = (ds,k) => { const e=S.sched[doc.id][ds][k];
-    const booked = S.patients.filter(p=>p.docId===doc.id&&p.date===ds&&p.status!=='cancelled'&&p.slot&&(toMin(p.slot)>=toMin(e.s)&&toMin(p.slot)<toMin(e.e))).length;
-    return `<div class="flex flex-wrap items-center gap-2"><label class="relative inline-flex cursor-pointer items-center"><input type="checkbox" class="peer sr-only" ${e.on?'checked':''} data-chg="sched" data-doc="${doc.id}" data-date="${ds}" data-sh="${k}" data-f="on" aria-label="${k==='m'?'Morning':'Evening'} on/off"><span class="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-blue-600 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition peer-checked:after:translate-x-5"></span></label>
-     <input type="time" step="600" value="${e.s}" ${e.on?'':'disabled'} data-chg="sched" data-doc="${doc.id}" data-date="${ds}" data-sh="${k}" data-f="s" class="w-[7.2rem] rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold disabled:opacity-40" aria-label="Start">
-     <span class="text-slate-400">–</span>
-     <input type="time" step="600" value="${e.e}" ${e.on?'':'disabled'} data-chg="sched" data-doc="${doc.id}" data-date="${ds}" data-sh="${k}" data-f="e" class="w-[7.2rem] rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-semibold disabled:opacity-40" aria-label="End">
-     ${booked?pill(booked+' booked','bg-blue-100 text-blue-800'):''}</div>`; };
   return `<section class="${B.card} space-y-4">
-   <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="text-base font-extrabold">7-day OPD schedule</h3><p class="text-xs text-slate-500">Morning and evening shifts per doctor. Patients book 10-minute slots inside these windows.</p></div>
-    <button data-act="copyDay" class="${B.ghost} !min-h-[38px] text-xs"><i class="fa-regular fa-copy"></i>Copy today’s timings to all days</button></div>
-   <div class="no-scrollbar flex gap-1.5 overflow-x-auto">${S.doctors.map(d=>`<button data-act="schedDoc" data-id="${d.id}" aria-pressed="${doc.id===d.id}" class="min-h-[36px] whitespace-nowrap rounded-full border px-3.5 text-xs font-bold ${doc.id===d.id?'border-blue-600 bg-blue-600 text-white':'border-slate-200 bg-white text-slate-600'}">${esc(d.name)}</button>`).join('')}</div>
-   <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-left text-sm"><thead><tr class="text-[11px] uppercase tracking-wide text-slate-400"><th class="py-2 pr-3">Day</th><th class="py-2 pr-3">🌅 Morning OPD</th><th class="py-2">🌇 Evening OPD</th></tr></thead>
-    <tbody class="divide-y divide-slate-100">${days.map(ds=>`<tr><td class="whitespace-nowrap py-2.5 pr-3 text-xs font-bold">${esc(ds===today()?'Today':dayLabel(ds,'en'))}</td><td class="py-2.5 pr-3">${cell(ds,'m')}</td><td class="py-2.5">${cell(ds,'e')}</td></tr>`).join('')}</tbody></table></div></section>`;
+    <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+      <div>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Token Status</span>
+        <h3 class="text-base font-extrabold text-slate-900">${esc(p.name)}</h3>
+      </div>
+      <span class="rounded-full px-3 py-1 text-xs font-bold ${p.status==='with'?'bg-emerald-100 text-emerald-700':p.status==='done'?'bg-slate-100 text-slate-600':'bg-amber-100 text-amber-700'}">${esc(t('st'+p.status.charAt(0).toUpperCase()+p.status.slice(1)))}</span>
+    </div>
+
+    <div class="rounded-2xl bg-gradient-to-br from-slate-900 to-blue-950 p-5 text-center text-white shadow-md">
+      <p class="text-xs text-blue-300 font-semibold uppercase tracking-wider">${esc(t('tokenYour'))}</p>
+      <div class="my-1 text-5xl font-black tracking-tight text-cyan-300">${tok(p)}</div>
+      <p class="text-xs text-slate-300">${esc(doc ? doc.name : '')} (${esc(p.gender)}, ${esc(p.age||'—')})</p>
+      <p class="mt-1 text-[11px] text-amber-300 font-medium">${p.slot ? t('slotAt',{time:fmt12(p.slot)}) : t('walkInQ')}</p>
+    </div>
+
+    ${info && !isDone ? `
+      <div class="grid grid-cols-2 gap-2 text-center text-xs">
+        <div class="rounded-xl bg-slate-50 p-2.5 border border-slate-200">
+          <p class="text-slate-400 text-[10px] font-bold uppercase">${esc(t('nowServing'))}</p>
+          <p class="font-extrabold text-slate-800 text-sm mt-0.5">${info.serving ? tok(info.serving) : 'None'}</p>
+        </div>
+        <div class="rounded-xl bg-slate-50 p-2.5 border border-slate-200">
+          <p class="text-slate-400 text-[10px] font-bold uppercase">${esc(t('estWait'))}</p>
+          <p class="font-extrabold text-blue-600 text-sm mt-0.5">~${info.wait} ${esc(t('min'))}</p>
+        </div>
+      </div>
+    ` : ''}
+
+    <div class="space-y-2 pt-1">
+      <button data-act="shareWa" class="${B.ghost} w-full text-xs py-2.5"><i class="fa-brands fa-whatsapp text-emerald-600 text-sm"></i>${esc(t('saveWa'))}</button>
+      ${!isDone ? `<button data-act="cancelMyToken" class="w-full text-xs font-semibold text-rose-600 py-1.5 hover:underline">${esc(t('cancelTok'))}</button>` : ''}
+      <button data-act="newPatientReg" class="${B.primary} w-full text-xs py-2.5 mt-2">${esc(t('newReg'))}</button>
+    </div>
+  </section>`;
 }
-function paymentsHTML(){
-  const paid = S.patients.filter(p=>p.date===today()&&p.pay.state==='paid').sort((a,b)=>(b.pay.at||0)-(a.pay.at||0));
-  const claimed = S.patients.filter(p=>p.date===today()&&p.pay.state==='claimed'&&p.status!=='cancelled');
-  const tot = {cash:0,upi:0,upi_qr:0}; paid.forEach(p=>tot[p.pay.method]+=p.fee);
+
+/* ═════════════ RECEPTIONIST VIEW ═════════════ */
+function receptionHTML(){
+  const activePatients = S.patients.filter(p=>p.date===today() && p.status!=='cancelled');
   return `<div class="space-y-4">
-   <section class="grid gap-3 sm:grid-cols-3">${S.doctors.map(d=>{
-     const link=`upi://pay?pa=${d.upi}&pn=${encodeURIComponent(d.name)}&am=${d.fee}&cu=INR`;
-     return `<div class="${B.card}"><div class="flex items-center gap-2"><span class="grid h-9 w-9 place-items-center rounded-full text-xs font-extrabold text-white" style="background:${d.color}">${d.code}</span><div><p class="text-sm font-bold">${esc(d.name)}</p><p class="text-[11px] text-slate-500">${esc(d.spec.en)}</p></div></div>
-      <div class="mt-3 flex justify-center rounded-xl bg-slate-50 p-2"><img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=${encodeURIComponent(link)}" alt="UPI QR for ${esc(d.name)}" class="h-32 w-32" onerror="this.style.display='none'"></div>
-      <label class="mt-3 block text-[11px] font-bold text-slate-500">UPI ID<input data-chg="upi" data-id="${d.id}" value="${esc(d.upi)}" class="mt-1 w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm font-semibold"></label>
-      <label class="mt-2 block text-[11px] font-bold text-slate-500">Consultation fee (₹)<input type="number" min="0" step="50" data-chg="docFee" data-id="${d.id}" value="${d.fee}" class="mt-1 w-full rounded-lg border border-slate-300 px-2.5 py-2 text-sm font-semibold"></label></div>`;}).join('')}</section>
-   ${claimed.length?`<section class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><h3 class="text-sm font-bold text-amber-800"><i class="fa-solid fa-hourglass-half mr-1"></i>${claimed.length} payment${claimed.length>1?'s':''} to verify</h3><ul class="mt-2 space-y-2">${claimed.map(p=>`<li class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-2.5 text-xs"><span><b>${esc(tok(p))}</b> ${esc(p.name)} · ${money(p.fee)}</span><span class="flex gap-1"><button data-act="logPay" data-id="${p.id}" data-m="upi_qr" class="${B.sm} bg-emerald-600 text-white">Confirm received (UPI QR)</button></span></li>`).join('')}</ul></section>`:''}
-   <section class="${B.card}"><div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 class="text-sm font-extrabold">Today’s payment log</h3><div class="flex gap-2 text-[11px] font-bold">${pill('Cash '+money(tot.cash),'bg-slate-100 text-slate-700')}${pill('UPI '+money(tot.upi),'bg-blue-100 text-blue-800')}${pill('UPI QR '+money(tot.upi_qr),'bg-cyan-100 text-cyan-800')}</div></div>
-    ${paid.length?`<div class="overflow-x-auto"><table class="w-full min-w-[420px] text-left text-xs"><thead class="text-[11px] uppercase text-slate-400"><tr><th class="py-1.5">Time</th><th>Patient</th><th>Doctor</th><th>Method</th><th class="text-right">Amount</th></tr></thead><tbody class="divide-y divide-slate-100">${paid.map(p=>`<tr><td class="py-2 text-slate-500">${p.pay.at?fmt12(new Date(p.pay.at).getHours()*60+new Date(p.pay.at).getMinutes()):'—'}</td><td class="font-semibold">${esc(p.name)}</td><td>${esc(docById(p.docId).name)}</td><td>${esc(methodName('en',p.pay.method))}</td><td class="text-right font-bold">${money(p.fee)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="text-xs text-slate-400">No payments logged yet.</p>'}</section></div>`;
-}
-function messagesHTML(){
-  const list = S.notes.slice(0,60);
-  return `<section class="${B.card}"><div class="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 class="text-sm font-extrabold">Sent notifications</h3><span class="text-[11px] text-slate-400">Simulated — plug in an SMS / WhatsApp gateway to send for real.</span></div>
-   ${list.length?`<ul class="divide-y divide-slate-100">${list.map(n=>{ const p=S.patients.find(x=>x.id===n.pid); return `<li class="flex gap-3 py-2.5 text-xs"><span class="mt-0.5 shrink-0">${n.ch==='SMS'?pill('<i class="fa-solid fa-message"></i> SMS','bg-slate-100 text-slate-700'):pill('<i class="fa-brands fa-whatsapp"></i> WhatsApp','bg-emerald-100 text-emerald-800')}</span><span class="min-w-0"><span class="block font-bold">${esc(p?p.name:'—')} <span class="font-normal text-slate-400">+91 ${esc(p?p.phone:'')} · ${fmt12(new Date(n.ts).getHours()*60+new Date(n.ts).getMinutes())}</span></span><span class="block break-words text-slate-600">${esc(n.text)}</span></span></li>`;}).join('')}</ul>`:'<p class="text-xs text-slate-400">Nothing sent yet.</p>'}</section>`;
+    <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+      <div>
+        <h2 class="text-base font-extrabold text-slate-900">Front Desk OPD Queue Console</h2>
+        <p class="text-xs text-slate-500">${activePatients.length} Patients Active Today</p>
+      </div>
+      <div class="flex gap-2">
+        <button data-act="openQuickAdd" class="${B.primary} text-xs py-2"><i class="fa-solid fa-user-plus"></i>Quick Add Patient</button>
+      </div>
+    </div>
+
+    <!-- Active Queue List -->
+    <div class="space-y-2">
+      ${S.doctors.map(doc => {
+        const queue = laneAll(doc.id);
+        return `<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex items-center justify-between border-b pb-2.5 border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="grid h-6 w-6 place-items-center rounded-lg text-xs font-bold text-white" style="background:${doc.color}">${doc.code}</span>
+              <h3 class="font-bold text-sm text-slate-800">${esc(doc.name)}</h3>
+            </div>
+            <span class="text-xs font-bold text-slate-500">${queue.filter(p=>p.status==='waiting').length} Waiting</span>
+          </div>
+
+          <div class="mt-3 space-y-2">
+            ${queue.length ? queue.map((p, idx) => `
+              <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-xs">
+                <div class="flex items-center gap-2.5">
+                  <span class="font-black text-blue-700 text-sm">#${tok(p)}</span>
+                  <div>
+                    <p class="font-bold text-slate-800">${esc(p.name)} <span class="font-normal text-slate-500">(${esc(p.gender)}, ${esc(p.age||'—')})</span></p>
+                    <p class="text-[10px] text-slate-400">Mob: ${esc(p.phone)} ${p.slot ? '· Slot: '+fmt12(p.slot) : '· Walk-in'}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <select data-chg="pStatus" data-id="${p.id}" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold outline-none">
+                    <option value="waiting" ${p.status==='waiting'?'selected':''}>⏳ Waiting</option>
+                    <option value="with" ${p.status==='with'?'selected':''}>🟢 With Doctor</option>
+                    <option value="done" ${p.status==='done'?'selected':''}>🏁 Done</option>
+                    <option value="cancelled" ${p.status==='cancelled'?'selected':''}>❌ Cancelled</option>
+                  </select>
+                </div>
+              </div>
+            `).join('') : '<p class="text-center text-xs text-slate-400 py-2">No patients in queue</p>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
-/* ═════════════ ADMIN ═════════════ */
-function history(){
-  const out=[], t0=today();
-  for(let i=0;i<60;i++){
-    const d=addDays(t0,-i), dow=new Date(d+'T00:00:00').getDay();
-    S.doctors.forEach(doc=>{
-      const base = (DOCS.find(x=>x.id===doc.id)||{base:12}).base;
-      let n = Math.round(base*(dow===0?0.5:1)*(0.8+(hash(d+doc.id)%41)/100));
-      if(i===0) n = Math.round(n*0.5);
-      out.push({date:d,docId:doc.id,n,amt:n*doc.fee});
-    });
-  }
-  return out;
-}
-function analytics(period){
-  const n = period==='day'?1:period==='week'?7:30, t0 = today();
-  const curFrom = addDays(t0,-(n-1)), prevFrom = addDays(t0,-(2*n-1)), prevTo = addDays(t0,-n);
-  const H = history();
-  const sum = (from,to)=>{ const per={}; S.doctors.forEach(d=>per[d.id]={n:0,amt:0}); H.forEach(r=>{ if(r.date>=from&&r.date<=to){ per[r.docId].n+=r.n; per[r.docId].amt+=r.amt; } }); return per; };
-  const cur = sum(curFrom,t0), prev = sum(prevFrom,prevTo);
-  let upi=0, cash=0; Object.values(cur).forEach(v=>{ upi+=v.amt*.65; cash+=v.amt*.35; });
-  S.patients.forEach(p=>{ if(p.date===t0 && p.status==='done'){ cur[p.docId].n++; if(p.pay.state==='paid'){ cur[p.docId].amt+=p.fee; if(p.pay.method==='cash') cash+=p.fee; else upi+=p.fee; } } });
-  const tot = o => Object.values(o).reduce((a,v)=>({n:a.n+v.n,amt:a.amt+v.amt}),{n:0,amt:0});
-  const c = tot(cur), p = tot(prev);
-  const dueNow = S.patients.filter(x=>x.date===t0&&x.status!=='cancelled'&&x.pay.state!=='paid').reduce((a,x)=>a+x.fee,0);
-  const trendDays = n===30?30:7, trend=[];
-  for(let i=trendDays-1;i>=0;i--){ const d=addDays(t0,-i); let v=H.filter(r=>r.date===d).reduce((a,r)=>a+r.n,0); if(i===0) v+=S.patients.filter(x=>x.date===t0&&x.status==='done').length; trend.push({d,v}); }
-  return {n,cur,c,p,upi,cash,dueNow,trend};
-}
-const delta = (c,p) => p ? Math.round((c-p)/p*100) : 0;
-const deltaChip = (c,p,period) => { const x=delta(c,p); return `<p class="mt-1 text-[11px] font-semibold ${x>=0?'text-emerald-600':'text-rose-600'}"><i class="fa-solid fa-arrow-${x>=0?'up':'down'}"></i> ${Math.abs(x)}% vs previous ${period}</p>`; };
-function barChart(items,fmtv,h){
-  const max = Math.max(1,...items.map(i=>i.v)), ph = h-22;
-  return `<div class="flex items-end justify-around gap-3" style="height:${h}px">${items.map(i=>`<div class="flex h-full max-w-[110px] flex-1 flex-col items-center justify-end gap-1"><span class="text-xs font-bold tabular-nums text-slate-700">${fmtv(i.v)}</span><div class="bar w-full rounded-t-lg" style="height:${Math.max(3,Math.round(i.v/max*ph))}px;background:${i.c}"></div></div>`).join('')}</div>
-   <div class="mt-2 flex justify-around gap-3">${items.map(i=>`<div class="max-w-[110px] flex-1 text-center text-[11px] font-semibold leading-tight text-slate-600">${esc(i.l)}</div>`).join('')}</div>`;
-}
-function adminHTML(){
-  const A = analytics(ui.period), per = {day:'day',week:'week',month:'month'}[ui.period];
-  const items = k => S.doctors.map(d=>({l:d.name,v:A.cur[d.id][k],c:d.color}));
-  const maxT = Math.max(1,...A.trend.map(x=>x.v));
-  const live = S.patients.filter(p=>p.date===today()&&p.status==='waiting').length;
-  return `<div class="space-y-4">
-   <div class="${B.card} flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-lg font-extrabold">Analytics & Business Intelligence</h2><p class="text-xs text-slate-500">Seeded history plus today’s live activity · ${live} patients waiting right now</p></div>
-    <div class="flex rounded-xl bg-slate-100 p-1 text-xs font-bold" role="group" aria-label="Period">${[['day','Day'],['week','Week'],['month','Month']].map(([id,l])=>`<button data-act="period" data-id="${id}" aria-pressed="${ui.period===id}" class="min-h-[36px] rounded-lg px-4 transition ${ui.period===id?'bg-blue-600 text-white shadow-sm':'text-slate-600'}">${l}</button>`).join('')}</div></div>
-   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-    <div class="${B.card}"><p class="text-[11px] font-bold uppercase text-slate-400">Patients seen</p><p class="mt-1 text-3xl font-black tabular-nums">${A.c.n.toLocaleString('en-IN')}</p>${deltaChip(A.c.n,A.p.n,per)}</div>
-    <div class="${B.card}"><p class="text-[11px] font-bold uppercase text-slate-400">Total collections</p><p class="mt-1 text-3xl font-black tabular-nums text-emerald-600">${money(A.c.amt)}</p>${deltaChip(A.c.amt,A.p.amt,per)}</div>
-    <div class="${B.card}"><p class="text-[11px] font-bold uppercase text-slate-400">Collection mix</p><div class="mt-2 flex h-3 overflow-hidden rounded-full bg-slate-100"><div class="bg-blue-600" style="width:${Math.round(A.upi/Math.max(1,A.upi+A.cash)*100)}%"></div><div class="bg-slate-400 flex-1"></div></div><p class="mt-2 text-[11px] text-slate-600"><span class="font-bold text-blue-700">UPI ${money(A.upi)}</span> · <span class="font-bold text-slate-600">Cash ${money(A.cash)}</span></p></div>
-    <div class="${B.card}"><p class="text-[11px] font-bold uppercase text-slate-400">Pending dues (today)</p><p class="mt-1 text-3xl font-black tabular-nums text-rose-600">${money(A.dueNow)}</p><p class="mt-1 text-[11px] text-slate-500">Avg ${money(A.c.amt/Math.max(1,A.c.n))} per patient</p></div></div>
-   <div class="grid gap-4 md:grid-cols-2">
-    <section class="${B.card}"><h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Patients seen by doctor</h3>${barChart(items('n'),v=>v.toLocaleString('en-IN'),200)}</section>
-    <section class="${B.card}"><h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Revenue by doctor (₹)</h3>${barChart(items('amt'),money,200)}</section></div>
-   <section class="${B.card}"><h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500">Daily patients · last ${A.trend.length} days</h3>
-    <div class="flex h-28 items-end gap-1">${A.trend.map(x=>`<div class="bar flex-1 rounded-t bg-blue-500/80 hover:bg-blue-600" style="height:${Math.max(3,Math.round(x.v/maxT*100))}%" title="${esc(dayLabel(x.d,'en'))}: ${x.v}"></div>`).join('')}</div>
-    <div class="mt-1 flex justify-between text-[10px] text-slate-400"><span>${esc(dayLabel(A.trend[0].d,'en'))}</span><span>${esc(dayLabel(A.trend[A.trend.length-1].d,'en'))}</span></div></section></div>`;
+/* ═════════════ DOCTORS MANAGEMENT & TIMINGS VIEW ═════════════ */
+function doctorManagementHTML(){
+  return `<div class="space-y-4 max-w-4xl mx-auto">
+    <div class="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+      <div>
+        <h2 class="text-base font-extrabold text-slate-900">Doctor Management & Shift Timings</h2>
+        <p class="text-xs text-slate-500">Add/Edit Doctors, configure weekly shift patterns & vacations</p>
+      </div>
+      <button data-act="openAddDocModal" class="${B.primary} text-xs py-2"><i class="fa-solid fa-plus"></i>${esc(t('addDoc'))}</button>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      ${S.doctors.map(doc => {
+        const pattern = doc.weeklyPattern || {days:[1,2,3,4,5,6], m:{on:true,s:'09:00',e:'13:00'}, e:{on:true,s:'17:00',e:'20:00'}};
+        const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const activeDaysText = pattern.days.map(d=>dayNames[d]).join(', ');
+
+        return `<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+            <div class="flex items-center gap-2.5">
+              <span class="grid h-9 w-9 place-items-center rounded-xl text-sm font-extrabold text-white" style="background:${doc.color}">${doc.code}</span>
+              <div>
+                <h3 class="font-extrabold text-sm text-slate-900">${esc(doc.name)}</h3>
+                <p class="text-xs text-slate-500">${esc(doc.spec[ui.lang]||doc.spec.en)} · Fee: ${money(doc.fee)}</p>
+              </div>
+            </div>
+            <div class="flex gap-1">
+              <button data-act="openEditDocModal" data-id="${doc.id}" class="p-2 text-slate-600 hover:text-blue-600 text-xs"><i class="fa-solid fa-pen"></i></button>
+              <button data-act="deleteDoc" data-id="${doc.id}" class="p-2 text-slate-400 hover:text-rose-600 text-xs"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+
+          <!-- Weekly Shift Pattern Card -->
+          <div class="rounded-xl bg-slate-50 p-3 text-xs space-y-1.5 border border-slate-100">
+            <p class="font-bold text-slate-700"><i class="fa-solid fa-calendar-week mr-1.5 text-blue-600"></i>Weekly Pattern: <span class="text-blue-700">${activeDaysText||'None'}</span></p>
+            <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-600 pt-1">
+              <div><strong>Morning:</strong> ${pattern.m&&pattern.m.on ? fmt12(pattern.m.s)+' - '+fmt12(pattern.m.e) : 'OFF'}</div>
+              <div><strong>Evening:</strong> ${pattern.e&&pattern.e.on ? fmt12(pattern.e.s)+' - '+fmt12(pattern.e.e) : 'OFF'}</div>
+            </div>
+          </div>
+
+          <!-- Time-Off / Vacation List -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-slate-700"><i class="fa-solid fa-plane-departure text-rose-500 mr-1"></i>Vacations / Time-Off</span>
+              <button data-act="openVacationModal" data-id="${doc.id}" class="text-[11px] font-bold text-blue-600 hover:underline">+ Add Vacation</button>
+            </div>
+            ${doc.vacations && doc.vacations.length ? `
+              <div class="space-y-1">
+                ${doc.vacations.map((v, idx) => `
+                  <div class="flex items-center justify-between rounded-lg bg-rose-50 px-2.5 py-1 text-[11px] text-rose-800 border border-rose-100">
+                    <span>${v.start} to ${v.end} ${v.reason ? '('+v.reason+')':''}</span>
+                    <button data-act="removeVacation" data-doc="${doc.id}" data-idx="${idx}" class="text-rose-600 font-bold ml-2">×</button>
+                  </div>
+                `).join('')}
+              </div>
+            ` : '<p class="text-[11px] text-slate-400 italic">No upcoming time-off</p>'}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
-/* ───────────── Dialogs: add patient / emergency / poster ───────────── */
-function slotOptionsFor(docId){
-  const parts=[`<option value="">Walk-in (no slot)</option>`];
-  ['m','e'].forEach(k=>{ const free=slotsFor(docId,today(),k).filter(s=>s.state==='free'); if(free.length) parts.push(`<optgroup label="${k==='m'?'Morning':'Evening'} OPD">${free.map(s=>`<option value="${s.t}">${fmt12(s.t)}</option>`).join('')}</optgroup>`); });
-  return parts.join('');
-}
-function openAdd(){
-  const d0 = S.doctors[0];
-  openDialog(`<form id="addForm" class="w-[min(92vw,28rem)] space-y-3 p-5 text-sm">
-   <div class="flex items-center justify-between"><h3 class="text-base font-extrabold">Add patient / 10-min appointment</h3><button type="button" data-act="dlgClose" class="text-slate-400 hover:text-slate-700" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
-   <label class="block text-xs font-bold text-slate-700">Full name<input name="name" required class="${B.input} mt-1"></label>
-   <label class="block text-xs font-bold text-slate-700">Mobile number<input name="phone" required inputmode="numeric" pattern="[0-9]{10}" maxlength="10" class="${B.input} mt-1" placeholder="10 digits"></label>
-   <div class="grid grid-cols-2 gap-2">
-    <label class="block text-xs font-bold text-slate-700">Doctor<select name="doc" id="add-doc" class="${B.input} mt-1">${S.doctors.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></label>
-    <label class="block text-xs font-bold text-slate-700">Slot today<select name="slot" id="add-slot" class="${B.input} mt-1">${slotOptionsFor(d0.id)}</select></label>
-    <label class="block text-xs font-bold text-slate-700">Gender<select name="gender" class="${B.input} mt-1"><option>Male</option><option>Female</option><option>Other</option></select></label>
-    <label class="block text-xs font-bold text-slate-700">SMS language<select name="lang" class="${B.input} mt-1"><option value="en">English</option><option value="hi">हिन्दी</option><option value="mr">मराठी</option></select></label></div>
-   <label class="block text-xs font-bold text-slate-700">Fee (₹)<input name="fee" id="add-fee" type="number" min="0" step="50" value="${d0.fee}" class="${B.input} mt-1"></label>
-   <div class="flex justify-end gap-2 pt-1"><button type="button" data-act="dlgClose" class="${B.ghost}">Cancel</button><button class="${B.primary}"><i class="fa-solid fa-paper-plane"></i>Book & send SMS</button></div></form>`);
-}
-function openEmergency(){
-  openDialog(`<div class="w-[min(92vw,28rem)] space-y-3 p-5 text-sm">
-   <div class="flex items-center justify-between"><h3 class="text-base font-extrabold text-rose-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Emergency delay block</h3><button data-act="dlgClose" class="text-slate-400 hover:text-slate-700" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
-   <p class="text-xs text-slate-600">Wait times for waiting patients update instantly and each affected patient gets an SMS + WhatsApp alert.</p>
-   <label class="block text-xs font-bold text-slate-700">Doctor<select id="em-doc" class="${B.input} mt-1">${S.doctors.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('')}<option value="all">All doctors</option></select></label>
-   <label class="block text-xs font-bold text-slate-700">Delay<select id="em-dur" class="${B.input} mt-1"><option value="30">30 minutes</option><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="full">Not available for the rest of the day</option></select></label>
-   <p id="em-preview" class="rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-700"></p>
-   <div class="flex justify-end gap-2"><button data-act="dlgClose" class="${B.ghost}">Cancel</button><button data-act="applyEmergency" class="${B.danger}"><i class="fa-solid fa-bullhorn"></i>Apply & broadcast</button></div></div>`);
-  updateEmPreview();
-}
-function updateEmPreview(){
-  const el=$('#em-preview'); if(!el) return;
-  const v=$('#em-doc').value, ids = v==='all'?S.doctors.map(d=>d.id):[v];
-  const n = S.patients.filter(p=>p.date===today()&&p.status==='waiting'&&ids.includes(p.docId)).length;
-  el.textContent = `${n} waiting patient${n===1?'':'s'} will be notified by SMS and WhatsApp.`;
-}
-function applyEmergency(){
-  const v=$('#em-doc').value, dur=$('#em-dur').value, ids = v==='all'?S.doctors.map(d=>d.id):[v];
-  ids.forEach(id=>{ S.delays[id] = dur==='full' ? {full:true,mins:0,at:Date.now()} : {full:false,mins:parseInt(dur,10),at:Date.now()}; });
-  let n=0;
-  S.patients.filter(p=>p.date===today()&&p.status==='waiting'&&ids.includes(p.docId)).forEach(p=>{
-    n++;
-    if(dur==='full') notify(p,'n_full'); else notify(p,'n_delay',{m:dur,wait:qInfo(p).wait});
-  });
-  closeDialog(); save(); toast(`Emergency applied · ${n} patient${n===1?'':'s'} notified`,'warn');
-}
-function openPoster(){
-  const qr='https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=6&data='+encodeURIComponent(baseUrl());
-  openDialog(`<div class="w-[min(92vw,26rem)] p-6 text-center"><div class="no-print mb-2 flex justify-end"><button data-act="dlgClose" class="text-slate-400 hover:text-slate-700" aria-label="Close"><i class="fa-solid fa-xmark text-lg"></i></button></div>
-   <h3 class="text-xl font-extrabold">Sky Multispecialty Hospital</h3>
-   <p class="mt-1 text-sm text-slate-600">Scan to join today’s OPD queue</p><p class="text-sm text-slate-600">आज की OPD कतार में जुड़ने के लिए स्कैन करें</p><p class="text-sm text-slate-600">आजच्या OPD रांगेत सामील होण्यासाठी स्कॅन करा</p>
-   <div class="mx-auto mt-4 inline-block rounded-2xl border-2 border-dashed border-blue-400 p-3"><img src="${qr}" alt="Queue QR" class="h-56 w-56"></div>
-   <p class="mt-3 text-xs text-slate-400">Token · wait time · UPI payment on your phone</p>
-   <button onclick="window.print()" class="${B.primary} no-print mt-4 w-full"><i class="fa-solid fa-print"></i>Print poster</button></div>`);
+/* ───────────── Modal Dialog Renderers ───────────── */
+function openAddEditDoctorModal(docId){
+  const isEdit = !!docId;
+  const doc = isEdit ? docById(docId) : {
+    id: 'doc_'+uid(), name: '', code: 'D', spec: {en:'', hi:'', mr:''}, fee: 500, upi: 'doctor@skyhospital', color: '#2563eb',
+    weeklyPattern: {days:[1,2,3,4,5,6], m:{on:true,s:'09:00',e:'13:00'}, e:{on:true,s:'17:00',e:'20:00'}}, vacations:[]
+  };
+  docEditing = JSON.parse(JSON.stringify(doc));
+
+  const p = docEditing.weeklyPattern;
+  const days = [0,1,2,3,4,5,6];
+  const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  openDialog(`<div class="w-[min(92vw,28rem)] p-5 space-y-4 text-xs">
+    <div class="flex items-center justify-between border-b pb-2">
+      <h3 class="font-extrabold text-base text-slate-900">${isEdit?'Edit Doctor & Timings':'Add New Doctor'}</h3>
+      <button onclick="closeDialog()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <form onsubmit="return false;" class="space-y-3">
+      <div>
+        <label class="font-bold text-slate-700">Doctor Name *</label>
+        <input id="doc-name" value="${esc(docEditing.name)}" placeholder="e.g. Dr. Kulkarni" class="${B.input} mt-1">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="font-bold text-slate-700">Specialty *</label>
+          <input id="doc-spec" value="${esc(docEditing.spec.en)}" placeholder="e.g. Cardiologist" class="${B.input} mt-1">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Consultation Fee (₹) *</label>
+          <input id="doc-fee" type="number" value="${docEditing.fee}" class="${B.input} mt-1">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="font-bold text-slate-700">UPI ID for Payments</label>
+          <input id="doc-upi" value="${esc(docEditing.upi)}" class="${B.input} mt-1">
+        </div>
+        <div>
+          <label class="font-bold text-slate-700">Badge Code & Color</label>
+          <div class="flex gap-2 mt-1">
+            <input id="doc-code" maxlength="2" value="${esc(docEditing.code)}" class="${B.input} w-16 text-center font-extrabold uppercase">
+            <input id="doc-color" type="color" value="${docEditing.color}" class="h-[44px] w-full rounded-xl cursor-pointer border border-slate-300 p-1">
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-slate-100">
+
+      <!-- Weekly Pattern Configurator -->
+      <div>
+        <label class="font-bold text-slate-800">Weekly Active Days</label>
+        <div class="flex flex-wrap gap-1.5 mt-1.5">
+          ${days.map(d=>`
+            <label class="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 cursor-pointer">
+              <input type="checkbox" data-day="${d}" ${p.days.includes(d)?'checked':''}>
+              <span class="font-bold text-slate-700">${dayLabels[d]}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Shift Hours Configurator -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <div class="rounded-xl border border-slate-200 p-2.5 bg-slate-50 space-y-2">
+          <label class="flex items-center justify-between font-bold text-slate-800">
+            <span>🌅 Morning Shift</span>
+            <input type="checkbox" id="m-on" ${p.m.on?'checked':''}>
+          </label>
+          <div class="grid grid-cols-2 gap-1">
+            <input id="m-start" type="time" value="${p.m.s}" class="rounded border p-1 text-xs">
+            <input id="m-end" type="time" value="${p.m.e}" class="rounded border p-1 text-xs">
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 p-2.5 bg-slate-50 space-y-2">
+          <label class="flex items-center justify-between font-bold text-slate-800">
+            <span>🌇 Evening Shift</span>
+            <input type="checkbox" id="e-on" ${p.e.on?'checked':''}>
+          </label>
+          <div class="grid grid-cols-2 gap-1">
+            <input id="e-start" type="time" value="${p.e.s}" class="rounded border p-1 text-xs">
+            <input id="e-end" type="time" value="${p.e.e}" class="rounded border p-1 text-xs">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-3">
+        <button type="button" onclick="closeDialog()" class="${B.ghost}">Cancel</button>
+        <button type="button" data-act="saveDoctor" class="${B.primary}">Save Doctor Profile</button>
+      </div>
+    </form>
+  </div>`);
 }
 
-/* ───────────── Drag & drop (mouse + touch via pointer events) ───────────── */
-document.addEventListener('pointerdown', e=>{
-  const h = e.target.closest('.drag-handle'); if(!h) return;
-  const card = h.closest('.qcard'); if(!card) return;
-  e.preventDefault();
-  drag = {card, list:card.parentElement, before:[...card.parentElement.children].map(c=>c.dataset.id).join()};
-  card.classList.add('dragging');
-});
-document.addEventListener('pointermove', e=>{
-  if(!drag) return;
-  e.preventDefault();
-  const y = e.clientY;
-  if(y<80) window.scrollBy(0,-12); else if(y>window.innerHeight-80) window.scrollBy(0,12);
-  const sibs = [...drag.list.querySelectorAll('.qcard:not(.dragging)')];
-  const ref = sibs.find(s=>{ const r=s.getBoundingClientRect(); return y < r.top + r.height/2; });
-  if(ref) { if(ref.previousElementSibling!==drag.card) drag.list.insertBefore(drag.card,ref); }
-  else if(drag.list.lastElementChild!==drag.card) drag.list.appendChild(drag.card);
-},{passive:false});
-function endDrag(){
-  if(!drag) return;
-  const {card,list,before} = drag; drag = null; card.classList.remove('dragging');
-  const ids = [...list.children].map(c=>c.dataset.id);
-  if(ids.join()!==before) commitOrder(list.dataset.doc, ids); else if(pendingRender){ pendingRender=false; render(); }
-}
-document.addEventListener('pointerup', endDrag);
-document.addEventListener('pointercancel', endDrag);
-function commitOrder(docId, ids){
-  const idxs = S.patients.map((p,i)=>(p.docId===docId&&p.date===today()&&p.status==='waiting')?i:-1).filter(i=>i>=0);
-  const byId = Object.fromEntries(S.patients.map(p=>[p.id,p]));
-  if(idxs.length!==ids.length) { pendingRender=false; render(); return; }
-  idxs.forEach((ai,k)=>{ S.patients[ai]=byId[ids[k]]; });
-  S.patients.forEach(p=>{ if(p.docId===docId) p.nearSent = false; });
-  afterChange(); pendingRender=false; save(); toast('Queue reordered · token numbers updated');
-}
-function moveInLane(id,dir){
-  const p = S.patients.find(x=>x.id===id); if(!p) return;
-  const lane = laneAll(p.docId).filter(x=>x.status==='waiting'), i = lane.indexOf(p), j = i+dir;
-  if(j<0||j>=lane.length) return;
-  const ids = lane.map(x=>x.id); [ids[i],ids[j]] = [ids[j],ids[i]];
-  commitOrder(p.docId, ids);
+function openVacationModal(docId){
+  const doc = docById(docId);
+  openDialog(`<div class="w-[min(92vw,22rem)] p-5 space-y-3 text-xs">
+    <h3 class="font-extrabold text-base text-slate-900">Add Vacation for ${esc(doc.name)}</h3>
+    <div>
+      <label class="font-bold text-slate-700">Start Date</label>
+      <input id="vac-start" type="date" value="${today()}" class="${B.input} mt-1">
+    </div>
+    <div>
+      <label class="font-bold text-slate-700">End Date</label>
+      <input id="vac-end" type="date" value="${today()}" class="${B.input} mt-1">
+    </div>
+    <div>
+      <label class="font-bold text-slate-700">Reason (Optional)</label>
+      <input id="vac-reason" placeholder="e.g. Annual Leave / Conference" class="${B.input} mt-1">
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" onclick="closeDialog()" class="${B.ghost}">Cancel</button>
+      <button type="button" data-act="saveVacation" data-id="${docId}" class="${B.primary}">Add Vacation</button>
+    </div>
+  </div>`);
 }
 
-/* ───────────── Actions (delegated) ───────────── */
-const act = {
-  role(id){ ui.role=id; saveUI(); render(); window.scrollTo(0,0); },
-  rTab(id){ ui.rTab=id; render(); },
-  laneDoc(id){ ui.laneDoc=id; render(); },
-  schedDoc(id){ ui.schedDoc=id; render(); },
-  period(id){ ui.period=id; render(); },
-  scan(){ ui.pStage='form'; draft=newDraft(); render(); window.scrollTo(0,0); },
-  backScan(){ ui.pStage='scan'; render(); },
-  pickGender(id){ draft.gender=id; render(); },
-  pickDoc(id){ draft.docId=id; draft.date=today(); const hrs=hoursOf(id,draft.date); if(!hrs.length){ for(let i=1;i<7;i++){ const ds=addDays(today(),i); if(hoursOf(id,ds).length){ draft.date=ds; break; } } } const h=hoursOf(id,draft.date); draft.shift=h.length?h[0].k:''; draft.slot=''; render(); },
-  pickDay(id){ draft.date=id; const h=hoursOf(draft.docId,id); draft.shift=h.length?h[0].k:''; draft.slot=''; render(); },
-  pickShift(id){ draft.shift=id; draft.slot=''; render(); },
-  pickSlot(id){ draft.slot=id; render(); },
-  submitReg(){
-    const e = formErrors();
-    if(Object.keys(e).length){ draft.tried=true; render(); const first=$('.text-rose-600.font-semibold'); if(first) first.scrollIntoView({block:'center',behavior:'smooth'}); return; }
-    const doc = docById(draft.docId), slot = draft.slot==='walkin' ? '' : draft.slot;
-    if(slot && S.patients.some(p=>p.docId===doc.id&&p.date===draft.date&&p.slot===slot&&p.status!=='cancelled')){ toast('That slot was just taken — please pick another.','err'); draft.slot=''; render(); return; }
-    const p = {id:uid(),name:draft.name.trim(),phone:draft.phone,gender:draft.gender,docId:doc.id,date:draft.date,slot,shift:slot?draft.shift:'',status:'waiting',fee:doc.fee,pay:{state:'due',method:null,at:null},lang:ui.lang,priority:false,createdAt:Date.now()};
-    insertPatient(p); ui.me = p.id;
-    if(p.date===today()) notify(p,'n_reg',{token:tok(p),wait:qInfo(p).wait}); else notify(p,'n_book',{date:dayLabel(p.date,p.lang),time:fmt12(p.slot)});
-    afterChange(); save(); window.scrollTo(0,0);
-    toast('SMS + WhatsApp sent to +91 '+p.phone);
-  },
-  iPaid(){ const p=S.patients.find(x=>x.id===ui.me); if(!p) return; p.pay.state='claimed'; save(); toast('Reception has been alerted to verify your payment.'); },
-  shareWa(){
-    const p=S.patients.find(x=>x.id===ui.me); if(!p) return;
-    const msg = p.date===today() ? tx(ui.lang,'n_reg',{doc:docById(p.docId).name,token:tok(p),wait:qInfo(p).wait,link:baseUrl()+'?p='+p.id}) : tx(ui.lang,'n_book',{doc:docById(p.docId).name,date:dayLabel(p.date,ui.lang),time:fmt12(p.slot),link:baseUrl()+'?p='+p.id});
-    window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener');
-  },
-  cancelMine(){ confirmDialog(t('cancelAsk'),'',t('yes'),()=>cancelPatient(ui.me,true),true,t('keep')); },
-  newReg(){ ui.me=null; ui.pStage='scan'; render(); },
-  dlgClose(){ closeDialog(); },
-  dlgYes(){ const f=pendingConfirm; closeDialog(); if(f) f(); },
-  resetDemo(){ confirmDialog('Reset demo data?','All patients, schedules and messages return to the sample data.','Reset',()=>{ ls.set(KEY,''); seedState(); ui.me=null; ui.pStage='scan'; save(); toast('Demo data reset'); },true); },
-  openAdd, openEmergency, openPoster, applyEmergency,
-  callIn(id){
-    const p=S.patients.find(x=>x.id===id), cur=laneAll(p.docId).find(q=>q.status==='with'&&q!==p);
-    if(cur){ toast(`Complete ${tok(cur)} ${cur.name} first`,'err'); return; }
-    p.status='with'; notify(p,'n_called',{token:tok(p)}); afterChange(); save();
-  },
-  complete(id){ const p=S.patients.find(x=>x.id===id); p.status='done'; p.doneAt=Date.now(); afterChange(); save(); if(p.pay.state!=='paid') toast('Visit complete — payment still pending','warn'); },
-  prio(id){ const p=S.patients.find(x=>x.id===id); const lane=laneAll(p.docId).filter(x=>x.status==='waiting'); if(lane[0]===p){ toast('Already first in line'); return; } p.priority=true; const ids=[p.id,...lane.filter(x=>x!==p).map(x=>x.id)]; commitOrder(p.docId,ids); },
-  moveUp(id){ moveInLane(id,-1); }, moveDown(id){ moveInLane(id,1); },
-  cancelPat(id){ const p=S.patients.find(x=>x.id===id); confirmDialog('Cancel '+p.name+'?','The patient will be notified by SMS and WhatsApp.','Cancel token',()=>cancelPatient(id,false),true,'Keep'); },
-  logPay(id,el){ const p=S.patients.find(x=>x.id===id), m=el.dataset.m; p.pay={state:'paid',method:m,at:Date.now()}; notify(p,'n_paid',{amt:p.fee,method:methodName(p.lang||'en',m)}); save(); toast(`${money(p.fee)} logged via ${methodName('en',m)}`); },
-  clearDelay(id){ delete S.delays[id]; S.patients.filter(p=>p.docId===id&&p.date===today()&&p.status==='waiting').forEach(p=>notify(p,'n_clear',{wait:qInfo(p).wait})); save(); toast('Delay cleared · patients notified'); },
-  copyDay(){ const doc=ui.schedDoc, src=S.sched[doc][today()]; Object.keys(S.sched[doc]).forEach(ds=>{ S.sched[doc][ds]={m:{...src.m},e:{...src.e}}; }); save(); toast('Timings copied to all 7 days'); }
-};
-function cancelPatient(id,mine){
-  const p=S.patients.find(x=>x.id===id); if(!p) return;
-  const label = p.date===today() ? tok(p) : '';
-  p.status='cancelled'; notify(p,'n_cancel',{token:label||fmt12(p.slot||'00:00')});
-  S.patients.filter(q=>q.docId===p.docId).forEach(q=>q.nearSent=false);
-  afterChange(); save(); toast('Token cancelled','warn');
-}
-const chg = {
-  lang(v){ ui.lang=v; render(); },
-  fee(v,el){ const p=S.patients.find(x=>x.id===el.dataset.id); if(p){ p.fee=Math.max(0,parseFloat(v)||0); save(); } },
-  upi(v,el){ const d=docById(el.dataset.id); v=v.trim(); if(!/^[\w.\-]{2,}@[a-zA-Z]{2,}$/.test(v)){ toast('Enter a valid UPI ID like name@bank','err'); render(); return; } d.upi=v; save(); toast('UPI ID saved for '+d.name); },
-  docFee(v,el){ const d=docById(el.dataset.id); d.fee=Math.max(0,parseFloat(v)||0); save(); toast('Fee updated for '+d.name); },
-  sched(v,el){
-    const {doc,date,sh,f}=el.dataset, e=S.sched[doc][date][sh];
-    if(f==='on') e.on = el.checked; else {
-      const old=e[f]; e[f]=v;
-      if(!v || toMin(e.e)-toMin(e.s)<SLOT){ e[f]=old; toast('End time must be at least 10 minutes after start','err'); }
+/* ───────────── Global Action Event Delegation ───────────── */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-act]');
+  if(!btn) return;
+  const act = btn.dataset.act;
+
+  if(act==='role'){ ui.role = btn.dataset.id; saveUI(); render(); }
+  if(act==='scan'){ ui.pStage = 'form'; render(); }
+  if(act==='pickDoc'){ draft.docId = btn.dataset.id; draft.shift = ''; draft.slot = ''; render(); }
+  if(act==='pickDate'){ draft.date = btn.dataset.date; draft.shift = ''; draft.slot = ''; render(); }
+  if(act==='pickShift'){ draft.shift = btn.dataset.id; draft.slot = ''; render(); }
+  if(act==='pickSlot'){ draft.slot = btn.dataset.id; render(); }
+  if(act==='pickMode'){ draft.mode = btn.dataset.mode; if(draft.mode==='walkin') draft.slot='walkin'; else draft.slot=''; render(); }
+  
+  if(act==='submitReg'){
+    if(!draft.name.trim() || !draft.phone || draft.phone.length<10 || !draft.docId){
+      toast('Please fill all required fields correctly', 'err');
+      return;
     }
+    const newPat = {
+      id: uid(), name: draft.name, phone: draft.phone, age: draft.age, gender: draft.gender, address: draft.address,
+      docId: draft.docId, date: draft.date, slot: draft.slot === 'walkin' ? '' : draft.slot,
+      shift: draft.shift, status: 'waiting', fee: docById(draft.docId).fee,
+      pay: {state:'due', method:null, at:null}, lang: ui.lang, createdAt: Date.now()
+    };
+    S.patients.push(newPat);
+    ui.me = newPat.id;
+    draft = newDraft();
     save();
+    toast('OPD Token Registered Successfully!');
   }
-};
-document.addEventListener('click', e=>{
-  const el = e.target.closest('[data-act]');
-  if(el){ const fn = act[el.dataset.act]; if(fn) fn(el.dataset.id, el); return; }
-  if(e.target.id==='dlg') closeDialog();
-});
-document.addEventListener('change', e=>{
-  const el = e.target.closest('[data-chg]');
-  if(el && chg[el.dataset.chg]) { chg[el.dataset.chg](el.type==='checkbox'?el.checked:el.value, el); return; }
-  if(e.target.id==='add-doc'){ $('#add-slot').innerHTML=slotOptionsFor(e.target.value); $('#add-fee').value=docById(e.target.value).fee; }
-  if(e.target.id==='em-doc') updateEmPreview();
-});
-document.addEventListener('input', e=>{
-  const k = e.target.dataset && e.target.dataset.draft; if(!k) return;
-  draft[k] = k==='phone' ? e.target.value.replace(/\D/g,'').slice(0,10) : e.target.value;
-  if(k==='phone') e.target.value = draft.phone;
-});
-document.addEventListener('submit', e=>{
-  if(e.target.id!=='addForm') return;
-  e.preventDefault();
-  const f = new FormData(e.target), doc = docById(f.get('doc')), slot = f.get('slot')||'';
-  const p = {id:uid(),name:String(f.get('name')).trim(),phone:f.get('phone'),gender:f.get('gender'),docId:doc.id,date:today(),slot,shift:slot?(toMin(slot)<780?'m':'e'):'',status:'waiting',fee:Math.max(0,parseFloat(f.get('fee'))||doc.fee),pay:{state:'due',method:null,at:null},lang:f.get('lang'),priority:false,createdAt:Date.now()};
-  insertPatient(p); notify(p,'n_reg',{token:tok(p),wait:qInfo(p).wait}); afterChange();
-  closeDialog(); save(); toast(`${tok(p)} booked · SMS + WhatsApp sent to +91 ${p.phone}`);
+
+  if(act==='newPatientReg'){ ui.me = null; ui.pStage = 'form'; draft = newDraft(); render(); }
+  if(act==='cancelMyToken'){
+    const p = S.patients.find(q=>q.id===ui.me);
+    if(p){ p.status = 'cancelled'; save(); toast('Token cancelled', 'warn'); }
+  }
+  if(act==='openQuickAdd'){ ui.role = 'patient'; ui.pStage = 'form'; draft = newDraft(); render(); }
+  
+  /* Doctor Admin Actions */
+  if(act==='openAddDocModal'){ openAddEditDoctorModal(null); }
+  if(act==='openEditDocModal'){ openAddEditDoctorModal(btn.dataset.id); }
+  if(act==='deleteDoc'){
+    if(confirm('Are you sure you want to remove this doctor?')){
+      S.doctors = S.doctors.filter(d=>d.id!==btn.dataset.id);
+      save();
+      toast('Doctor removed');
+    }
+  }
+  if(act==='saveDoctor'){
+    const name = $('#doc-name').value.trim();
+    const spec = $('#doc-spec').value.trim();
+    const fee = parseFloat($('#doc-fee').value) || 500;
+    const upi = $('#doc-upi').value.trim();
+    const code = $('#doc-code').value.trim() || 'D';
+    const color = $('#doc-color').value;
+
+    if(!name || !spec){ toast('Name and specialty are required', 'err'); return; }
+
+    const checkedDays = Array.from(document.querySelectorAll('input[data-day]:checked')).map(cb=>Number(cb.dataset.day));
+    
+    docEditing.name = name;
+    docEditing.spec.en = spec; docEditing.spec.hi = spec; docEditing.spec.mr = spec;
+    docEditing.fee = fee;
+    docEditing.upi = upi;
+    docEditing.code = code;
+    docEditing.color = color;
+    docEditing.weeklyPattern = {
+      days: checkedDays,
+      m: {on: $('#m-on').checked, s: $('#m-start').value, e: $('#m-end').value},
+      e: {on: $('#e-on').checked, s: $('#e-start').value, e: $('#e-end').value}
+    };
+
+    const idx = S.doctors.findIndex(d=>d.id===docEditing.id);
+    if(idx>=0) S.doctors[idx] = docEditing;
+    else S.doctors.push(docEditing);
+
+    closeDialog();
+    save();
+    toast('Doctor configuration saved');
+  }
+
+  if(act==='openVacationModal'){ openVacationModal(btn.dataset.id); }
+  if(act==='saveVacation'){
+    const doc = docById(btn.dataset.id);
+    const start = $('#vac-start').value;
+    const end = $('#vac-end').value;
+    const reason = $('#vac-reason').value.trim();
+    if(start && end){
+      doc.vacations = doc.vacations || [];
+      doc.vacations.push({start, end, reason});
+      closeDialog();
+      save();
+      toast('Vacation added');
+    }
+  }
+  if(act==='removeVacation'){
+    const doc = docById(btn.dataset.doc);
+    const idx = Number(btn.dataset.idx);
+    doc.vacations.splice(idx,1);
+    save();
+    toast('Vacation removed');
+  }
+
+  if(act==='resetDemo'){ seedState(); save(); toast('Demo data reset'); }
 });
 
-/* ───────────── Live sync across tabs ───────────── */
-function editing(){ const a=document.activeElement; return a && ['INPUT','SELECT','TEXTAREA'].includes(a.tagName) && !$('#dlg').open && a.closest('#app') && a.closest('main'); }
-window.addEventListener('storage', e=>{
-  if(e.key!==KEY || !e.newValue) return;
-  try{ S = JSON.parse(e.newValue); }catch(err){ return; }
-  if(editing()) { pendingRender = true; return; }
-  if(!$('#dlg').open) render();
+document.addEventListener('input', (e) => {
+  if(e.target.dataset.draft){
+    draft[e.target.dataset.draft] = e.target.value;
+  }
 });
-document.addEventListener('focusout', ()=>{ setTimeout(()=>{ if(pendingRender && !editing() && !drag){ pendingRender=false; render(); } },150); });
-setInterval(()=>{ if(!editing() && !drag && !$('#dlg').open){ ensureSchedule(); render(); } }, 30000);
 
-/* ───────────── Boot ───────────── */
-loadState(); loadUI(); render();
+document.addEventListener('change', (e) => {
+  if(e.target.dataset.chg==='lang'){ ui.lang = e.target.value; render(); }
+  if(e.target.dataset.chg==='pStatus'){
+    const p = S.patients.find(q=>q.id===e.target.dataset.id);
+    if(p){ p.status = e.target.value; if(p.status==='done') p.doneAt = Date.now(); save(); }
+  }
+});
+
+/* ───────────── Initialization ───────────── */
+loadState();
+loadUI();
+render();
+
 })();
 </script>
 </body>
